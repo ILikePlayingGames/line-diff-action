@@ -43,17 +43,17 @@ async function run(): Promise<void> {
     let diff = ''
 
     if (await tools.doesCommitExist(commitHash)) {
+      // diff-so-fancy needs this variable for ANSI
+      // It's not defined on GitHub runners
+      if (process.env.RUNNER_OS !== undefined) {
+        process.env.TERM = 'xterm-256color'
+      }
       diff = await getDiffBetweenCommitAndHead(commitHash)
     } else {
       core.setFailed(`Commit ${commitHash} wasn't found.`)
     }
 
     core.setOutput('diff', diff)
-
-    // diff-so-fancy needs this variable for ANSI
-    if (process.env.RUNNER_OS !== undefined) {
-      process.env.TERM = 'xterm-256color'
-    }
     core.info(diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)

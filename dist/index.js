@@ -207,16 +207,17 @@ function run() {
             const commitHash = core.getInput('commit-hash');
             let diff = '';
             if (yield tools.doesCommitExist(commitHash)) {
+                // diff-so-fancy needs this variable for ANSI
+                // It's not defined on GitHub runners
+                if (process.env.RUNNER_OS !== undefined) {
+                    process.env.TERM = 'xterm-256color';
+                }
                 diff = yield (0, diff_1.getDiffBetweenCommitAndHead)(commitHash);
             }
             else {
                 core.setFailed(`Commit ${commitHash} wasn't found.`);
             }
             core.setOutput('diff', diff);
-            // diff-so-fancy needs this variable for ANSI
-            if (process.env.RUNNER_OS !== undefined) {
-                process.env.TERM = 'xterm-256color';
-            }
             core.info(diff);
         }
         catch (error) {
