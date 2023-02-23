@@ -2,34 +2,26 @@ import * as exec from '@actions/exec'
 
 export async function setupDiffSoFancy(): Promise<void> {
   // Setup git to use diff-so-fancy
-  const setupGitOutput: exec.ExecOutput = await exec.getExecOutput(
-    `git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
-    git config --global interactive.diffFilter "diff-so-fancy --patch"`
-  )
-  if (setupGitOutput.exitCode !== 0) {
-    throw new Error(setupGitOutput.stderr)
-  }
+  await execCommands([
+    'git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX',
+    'git config --global interactive.diffFilter "diff-so-fancy --patch"'
+  ])
 
   // Setup colours
-  const setColoursOutput: exec.ExecOutput = await exec.getExecOutput(
-    `git config --global color.ui true
-
-    git config --global color.diff-highlight.oldNormal    "red bold"
-    git config --global color.diff-highlight.oldHighlight "red bold 52"
-    git config --global color.diff-highlight.newNormal    "green bold"
-    git config --global color.diff-highlight.newHighlight "green bold 22"
-    
-    git config --global color.diff.meta       "11"
-    git config --global color.diff.frag       "magenta bold"
-    git config --global color.diff.func       "146 bold"
-    git config --global color.diff.commit     "yellow bold"
-    git config --global color.diff.old        "red bold"
-    git config --global color.diff.new        "green bold"
-    git config --global color.diff.whitespace "red reverse"`
-  )
-  if (setColoursOutput.exitCode !== 0) {
-    throw new Error(setColoursOutput.stderr)
-  }
+  await execCommands([
+    'git config --global color.ui true',
+    'git config --global color.diff-highlight.oldNormal    "red bold"',
+    'git config --global color.diff-highlight.oldHighlight "red bold 52"',
+    'git config --global color.diff-highlight.newNormal    "green bold"',
+    'git config --global color.diff-highlight.newHighlight "green bold 22"',
+    'git config --global color.diff.meta       "11"',
+    'git config --global color.diff.frag       "magenta bold"',
+    'git config --global color.diff.func       "146 bold"',
+    'git config --global color.diff.commit     "yellow bold"',
+    'git config --global color.diff.old        "red bold"',
+    'git config --global color.diff.new        "green bold"',
+    'git config --global color.diff.whitespace "red reverse"'
+  ])
 }
 
 export async function doesCommitExist(hash: string): Promise<boolean> {
@@ -44,5 +36,21 @@ export async function doesCommitExist(hash: string): Promise<boolean> {
       return false
     default:
       throw new Error(commitExistsOutput.stderr)
+  }
+}
+
+/**
+ * Executes a list of command line commands.
+ * Command output isn't captured, use only commands where the
+ * output isn't required.
+ *
+ * @param commands the commands to execute
+ */
+async function execCommands(commands: string[]): Promise<void> {
+  for (const command of commands) {
+    const commandOutput: exec.ExecOutput = await exec.getExecOutput(command)
+    if (commandOutput.exitCode !== 0) {
+      throw new Error(commandOutput.stderr)
+    }
   }
 }
