@@ -15,6 +15,7 @@ async function run(): Promise<void> {
     }
 
     core.setOutput('diff', diff)
+    core.info(diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

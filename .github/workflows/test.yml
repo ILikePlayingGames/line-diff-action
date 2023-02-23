@@ -27,4 +27,3 @@ jobs:
         uses: ./
         with:
           commit-hash: '@~'
-      - run: echo ${{ steps.run_action.outputs.diff }}
