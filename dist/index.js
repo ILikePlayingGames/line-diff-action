@@ -173,14 +173,22 @@ const diff_1 = __nccwpck_require__(2484);
 function downloadDiffSoFancy() {
     return __awaiter(this, void 0, void 0, function* () {
         const diffSoFancyPath = yield tc.downloadTool('https://github.com/so-fancy/diff-so-fancy/releases/download/v1.4.3/diff-so-fancy');
-        return yield tc.cacheFile(diffSoFancyPath, 'diff-so-fancy', 'diff-so-fancy', '1.4.3');
+        core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`);
+        const cachePath = yield tc.cacheFile(diffSoFancyPath, 'diff-so-fancy', 'diff-so-fancy', '1.4.3');
+        core.debug(`cache path: ${cachePath}`);
+        return cachePath;
     });
 }
 function loadDiffSoFancy() {
     return __awaiter(this, void 0, void 0, function* () {
         let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3');
+        if (diffSoFancyDir !== undefined) {
+            core.debug(`diff-so-fancy found at ${diffSoFancyDir}`);
+        }
         if (diffSoFancyDir === undefined) {
+            core.info(`diff-so-fancy not found in cache, downloading...`);
             diffSoFancyDir = yield downloadDiffSoFancy();
+            core.info(`download finished`);
         }
         core.addPath(diffSoFancyDir);
     });

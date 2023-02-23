@@ -7,19 +7,30 @@ async function downloadDiffSoFancy(): Promise<string> {
   const diffSoFancyPath = await tc.downloadTool(
     'https://github.com/so-fancy/diff-so-fancy/releases/download/v1.4.3/diff-so-fancy'
   )
-  return await tc.cacheFile(
+  core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`)
+
+  const cachePath = await tc.cacheFile(
     diffSoFancyPath,
     'diff-so-fancy',
     'diff-so-fancy',
     '1.4.3'
   )
+  core.debug(`cache path: ${cachePath}`)
+
+  return cachePath
 }
 
 async function loadDiffSoFancy(): Promise<void> {
   let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3')
 
+  if (diffSoFancyDir !== undefined) {
+    core.debug(`diff-so-fancy found at ${diffSoFancyDir}`)
+  }
+
   if (diffSoFancyDir === undefined) {
+    core.info(`diff-so-fancy not found in cache, downloading...`)
     diffSoFancyDir = await downloadDiffSoFancy()
+    core.info(`download finished`)
   }
   core.addPath(diffSoFancyDir)
 }
