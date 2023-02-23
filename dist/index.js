@@ -213,6 +213,10 @@ function run() {
                 core.setFailed(`Commit ${commitHash} wasn't found.`);
             }
             core.setOutput('diff', diff);
+            // diff-so-fancy needs this variable for ANSI
+            if (process.env.RUNNER_OS !== undefined) {
+                process.env.TERM = 'xterm-256color';
+            }
             core.info(diff);
         }
         catch (error) {

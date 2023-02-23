@@ -49,6 +49,11 @@ async function run(): Promise<void> {
     }
 
     core.setOutput('diff', diff)
+
+    // diff-so-fancy needs this variable for ANSI
+    if (process.env.RUNNER_OS !== undefined) {
+      process.env.TERM = 'xterm-256color'
+    }
     core.info(diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
