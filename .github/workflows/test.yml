@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/checkout@v3 # checkout commits used in tests
+        with:
+          ref: '7a118f3040c7cbe7373bc03783a3e65d5cd42cd4'
+      - uses: actions/checkout@v3
+        with:
+          ref: '567215cb1083813b143f15526175382ee049d8e0'
       - run: |
           npm install
       - run: |
@@ -21,4 +27,4 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./
         with:
-          milliseconds: 1000
+          commit-hash: '7a118f3040c7cbe7373bc03783a3e65d5cd42cd4'
