@@ -41,42 +41,46 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.doesCommitExist = exports.setupDiffSoFancy = void 0;
 const exec = __importStar(__nccwpck_require__(514));
+const core = __importStar(__nccwpck_require__(186));
 function setupDiffSoFancy() {
     return __awaiter(this, void 0, void 0, function* () {
         // Setup git to use diff-so-fancy
         yield execCommands([
-            'git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX',
-            'git config --global interactive.diffFilter "diff-so-fancy --patch"'
+            'git config --local core.pager "diff-so-fancy | less --tabs=4 -RFX',
+            'git config --local interactive.diffFilter "diff-so-fancy --patch"'
         ]);
         // Setup colours
         yield execCommands([
-            'git config --global color.ui true',
-            'git config --global color.diff-highlight.oldNormal    "red bold"',
-            'git config --global color.diff-highlight.oldHighlight "red bold 52"',
-            'git config --global color.diff-highlight.newNormal    "green bold"',
-            'git config --global color.diff-highlight.newHighlight "green bold 22"',
-            'git config --global color.diff.meta       "11"',
-            'git config --global color.diff.frag       "magenta bold"',
-            'git config --global color.diff.func       "146 bold"',
-            'git config --global color.diff.commit     "yellow bold"',
-            'git config --global color.diff.old        "red bold"',
-            'git config --global color.diff.new        "green bold"',
-            'git config --global color.diff.whitespace "red reverse"'
+            'git config --local color.ui true',
+            'git config --local color.diff-highlight.oldNormal    "red bold"',
+            'git config --local color.diff-highlight.oldHighlight "red bold 52"',
+            'git config --local color.diff-highlight.newNormal    "green bold"',
+            'git config --local color.diff-highlight.newHighlight "green bold 22"',
+            'git config --local color.diff.meta       "11"',
+            'git config --local color.diff.frag       "magenta bold"',
+            'git config --local color.diff.func       "146 bold"',
+            'git config --local color.diff.commit     "yellow bold"',
+            'git config --local color.diff.old        "red bold"',
+            'git config --local color.diff.new        "green bold"',
+            'git config --local color.diff.whitespace "red reverse"'
         ]);
     });
 }
 exports.setupDiffSoFancy = setupDiffSoFancy;
 function doesCommitExist(hash) {
     return __awaiter(this, void 0, void 0, function* () {
-        const commitExistsOutput = yield exec.getExecOutput(`git merge-base --is-ancestor ${hash} HEAD`);
-        switch (commitExistsOutput.exitCode) {
-            case 0:
-                return true;
-            case 1:
-                return false;
-            default:
-                throw new Error(commitExistsOutput.stderr);
+        let commitExistsOutput;
+        try {
+            commitExistsOutput = yield exec.getExecOutput(`git merge-base --is-ancestor ${hash} HEAD`);
         }
+        catch (error) {
+            // It can also throw an error if it doesn't exist.
+            if ((error === null || error === void 0 ? void 0 : error.message) !== undefined) {
+                core.debug(error === null || error === void 0 ? void 0 : error.message);
+            }
+            return false;
+        }
+        return commitExistsOutput.exitCode === 0;
     });
 }
 exports.doesCommitExist = doesCommitExist;
@@ -139,18 +143,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDiff = void 0;
+exports.getDiffBetweenCommitAndHead = exports.getDiffBetweenCommits = void 0;
 const exec = __importStar(__nccwpck_require__(514));
-function getDiff(hash) {
+function getDiffBetweenCommits(hashOne, hashTwo) {
     return __awaiter(this, void 0, void 0, function* () {
-        const getDiffOutput = yield exec.getExecOutput(`git diff ${hash} HEAD`);
+        const getDiffOutput = yield exec.getExecOutput(`git diff ${hashOne} ${hashTwo}`);
         if (getDiffOutput.exitCode !== 0) {
             throw new Error(getDiffOutput.stderr);
         }
         return getDiffOutput.stdout;
     });
 }
-exports.getDiff = getDiff;
+exports.getDiffBetweenCommits = getDiffBetweenCommits;
+function getDiffBetweenCommitAndHead(hash) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return getDiffBetweenCommits(hash, 'HEAD');
+    });
+}
+exports.getDiffBetweenCommitAndHead = getDiffBetweenCommitAndHead;
 
 
 /***/ }),
@@ -204,7 +214,7 @@ function run() {
             const commitHash = core.getInput('commit-hash');
             let diff = '';
             if (yield tools.doesCommitExist(commitHash)) {
-                diff = yield (0, diff_1.getDiff)(commitHash);
+                diff = yield (0, diff_1.getDiffBetweenCommitAndHead)(commitHash);
             }
             core.setOutput('diff', diff);
         }

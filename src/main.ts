@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as tools from './command-line-tools'
-import {getDiff} from './diff'
+import {getDiffBetweenCommitAndHead} from './diff'
 
 async function run(): Promise<void> {
   try {
@@ -11,7 +11,7 @@ async function run(): Promise<void> {
     let diff = ''
 
     if (await tools.doesCommitExist(commitHash)) {
-      diff = await getDiff(commitHash)
+      diff = await getDiffBetweenCommitAndHead(commitHash)
     }
 
     core.setOutput('diff', diff)
