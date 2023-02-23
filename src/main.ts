@@ -16,6 +16,7 @@ async function downloadDiffSoFancy(): Promise<string> {
     '1.4.3'
   )
   core.debug(`cache path: ${cachePath}`)
+  await tools.makeFileExecutable(`${cachePath}/diff-so-fancy`)
 
   return cachePath
 }

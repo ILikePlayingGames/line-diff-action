@@ -17,3 +17,7 @@ export async function doesCommitExist(hash: string): Promise<boolean> {
 
   return commitExistsOutput.exitCode === 0
 }
+
+export async function makeFileExecutable(path: string): Promise<void> {
+  await exec.exec(`chmod +x ${path}`)
+}

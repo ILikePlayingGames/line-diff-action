@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.doesCommitExist = void 0;
+exports.makeFileExecutable = exports.doesCommitExist = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
 const core = __importStar(__nccwpck_require__(2186));
 function doesCommitExist(hash) {
@@ -59,6 +59,12 @@ function doesCommitExist(hash) {
     });
 }
 exports.doesCommitExist = doesCommitExist;
+function makeFileExecutable(path) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec.exec(`chmod +x ${path}`);
+    });
+}
+exports.makeFileExecutable = makeFileExecutable;
 
 
 /***/ }),
@@ -176,6 +182,7 @@ function downloadDiffSoFancy() {
         core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`);
         const cachePath = yield tc.cacheFile(diffSoFancyPath, 'diff-so-fancy', 'diff-so-fancy', '1.4.3');
         core.debug(`cache path: ${cachePath}`);
+        yield tools.makeFileExecutable(`${cachePath}/diff-so-fancy`);
         return cachePath;
     });
 }
