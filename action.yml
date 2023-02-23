@@ -1,11 +1,13 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Show Line Diff'
+description: 'Displays the line differences between HEAD and a given commit hash'
+author: 'ILikePlayingGames'
 inputs:
-  milliseconds: # change this
+  commit-hash: # change this
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'The commit hash to compare to HEAD'
+outputs:
+  diff:
+    description: 'The formatted line differences between HEAD and a given commit hash'
 runs:
   using: 'node16'
   main: 'dist/index.js'

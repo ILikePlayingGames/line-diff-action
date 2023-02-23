@@ -1,16 +1,20 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import * as tools from './command-line-tools'
+import {getDiff} from './diff'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    await tools.setupDiffSoFancy()
+    core.debug('diff-so-fancy setup successfully')
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const commitHash: string = core.getInput('commit-hash')
+    let diff = ''
 
-    core.setOutput('time', new Date().toTimeString())
+    if (await tools.doesCommitExist(commitHash)) {
+      diff = await getDiff(commitHash)
+    }
+
+    core.setOutput('diff', diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
