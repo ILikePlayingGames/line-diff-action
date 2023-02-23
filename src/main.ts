@@ -23,11 +23,11 @@ async function downloadDiffSoFancy(): Promise<string> {
 async function loadDiffSoFancy(): Promise<void> {
   let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3')
 
-  if (diffSoFancyDir !== undefined) {
+  if (diffSoFancyDir !== '') {
     core.debug(`diff-so-fancy found at ${diffSoFancyDir}`)
   }
 
-  if (diffSoFancyDir === undefined) {
+  if (diffSoFancyDir === '') {
     core.info(`diff-so-fancy not found in cache, downloading...`)
     diffSoFancyDir = await downloadDiffSoFancy()
     core.info(`download finished`)

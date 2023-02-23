@@ -182,10 +182,10 @@ function downloadDiffSoFancy() {
 function loadDiffSoFancy() {
     return __awaiter(this, void 0, void 0, function* () {
         let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3');
-        if (diffSoFancyDir !== undefined) {
+        if (diffSoFancyDir !== '') {
             core.debug(`diff-so-fancy found at ${diffSoFancyDir}`);
         }
-        if (diffSoFancyDir === undefined) {
+        if (diffSoFancyDir === '') {
             core.info(`diff-so-fancy not found in cache, downloading...`);
             diffSoFancyDir = yield downloadDiffSoFancy();
             core.info(`download finished`);
