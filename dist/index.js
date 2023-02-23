@@ -39,34 +39,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.doesCommitExist = exports.setupDiffSoFancy = void 0;
+exports.doesCommitExist = void 0;
 const exec = __importStar(__nccwpck_require__(514));
 const core = __importStar(__nccwpck_require__(186));
-function setupDiffSoFancy() {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Setup git to use diff-so-fancy
-        yield execCommands([
-            'git config --local core.pager "diff-so-fancy | less --tabs=4 -RFX',
-            'git config --local interactive.diffFilter "diff-so-fancy --patch"'
-        ]);
-        // Setup colours
-        yield execCommands([
-            'git config --local color.ui true',
-            'git config --local color.diff-highlight.oldNormal    "red bold"',
-            'git config --local color.diff-highlight.oldHighlight "red bold 52"',
-            'git config --local color.diff-highlight.newNormal    "green bold"',
-            'git config --local color.diff-highlight.newHighlight "green bold 22"',
-            'git config --local color.diff.meta       "11"',
-            'git config --local color.diff.frag       "magenta bold"',
-            'git config --local color.diff.func       "146 bold"',
-            'git config --local color.diff.commit     "yellow bold"',
-            'git config --local color.diff.old        "red bold"',
-            'git config --local color.diff.new        "green bold"',
-            'git config --local color.diff.whitespace "red reverse"'
-        ]);
-    });
-}
-exports.setupDiffSoFancy = setupDiffSoFancy;
 function doesCommitExist(hash) {
     return __awaiter(this, void 0, void 0, function* () {
         let commitExistsOutput;
@@ -84,23 +59,6 @@ function doesCommitExist(hash) {
     });
 }
 exports.doesCommitExist = doesCommitExist;
-/**
- * Executes a list of command line commands.
- * Command output isn't captured, use only commands where the
- * output isn't required.
- *
- * @param commands the commands to execute
- */
-function execCommands(commands) {
-    return __awaiter(this, void 0, void 0, function* () {
-        for (const command of commands) {
-            const commandOutput = yield exec.getExecOutput(command);
-            if (commandOutput.exitCode !== 0) {
-                throw new Error(commandOutput.stderr);
-            }
-        }
-    });
-}
 
 
 /***/ }),
@@ -147,7 +105,12 @@ exports.getDiffBetweenCommitAndHead = exports.getDiffBetweenCommits = void 0;
 const exec = __importStar(__nccwpck_require__(514));
 function getDiffBetweenCommits(hashOne, hashTwo) {
     return __awaiter(this, void 0, void 0, function* () {
-        const getDiffOutput = yield exec.getExecOutput(`git diff ${hashOne} ${hashTwo}`);
+        const getDiffOutput = yield exec.getExecOutput(
+        /*
+        Workaround for @actions/exec not supporting pipes
+        Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+         */
+        `/bin/bash -c "git diff -u ${hashOne} ${hashTwo} | diff-so-fancy"`);
         if (getDiffOutput.exitCode !== 0) {
             throw new Error(getDiffOutput.stderr);
         }
@@ -209,14 +172,16 @@ const diff_1 = __nccwpck_require__(484);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield tools.setupDiffSoFancy();
-            core.debug('diff-so-fancy setup successfully');
             const commitHash = core.getInput('commit-hash');
             let diff = '';
             if (yield tools.doesCommitExist(commitHash)) {
                 diff = yield (0, diff_1.getDiffBetweenCommitAndHead)(commitHash);
             }
+            else {
+                core.setFailed(`Commit ${commitHash} wasn't found.`);
+            }
             core.setOutput('diff', diff);
+            core.info(diff);
         }
         catch (error) {
             if (error instanceof Error)

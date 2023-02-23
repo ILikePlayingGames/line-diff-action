@@ -2,10 +2,6 @@ import * as commandLineTools from '../src/command-line-tools'
 import * as diffTool from '../src/diff'
 import {expect, test} from '@jest/globals'
 
-test('diff-so-fancy setup', async () => {
-  await expect(commandLineTools.setupDiffSoFancy()).resolves.not.toThrowError()
-})
-
 test("commit doesn't exist", async () => {
   let hash = '7a118f3040c7cbe7373bc03783a3e65d5cd42cd5'
   await expect(commandLineTools.doesCommitExist(hash)).resolves.toEqual(false)

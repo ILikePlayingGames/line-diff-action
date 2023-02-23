@@ -4,14 +4,13 @@ import {getDiffBetweenCommitAndHead} from './diff'
 
 async function run(): Promise<void> {
   try {
-    await tools.setupDiffSoFancy()
-    core.debug('diff-so-fancy setup successfully')
-
     const commitHash: string = core.getInput('commit-hash')
     let diff = ''
 
     if (await tools.doesCommitExist(commitHash)) {
       diff = await getDiffBetweenCommitAndHead(commitHash)
+    } else {
+      core.setFailed(`Commit ${commitHash} wasn't found.`)
     }
 
     core.setOutput('diff', diff)

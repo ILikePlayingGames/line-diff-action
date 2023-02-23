@@ -4,7 +4,11 @@ export async function getDiffBetweenCommits(
   hashTwo: string
 ): Promise<string> {
   const getDiffOutput: exec.ExecOutput = await exec.getExecOutput(
-    `git diff ${hashOne} ${hashTwo}`
+    /*
+    Workaround for @actions/exec not supporting pipes
+    Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+     */
+    `/bin/bash -c "git diff -u ${hashOne} ${hashTwo} | diff-so-fancy"`
   )
   if (getDiffOutput.exitCode !== 0) {
     throw new Error(getDiffOutput.stderr)
