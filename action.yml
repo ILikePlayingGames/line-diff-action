@@ -1,6 +1,9 @@
 name: 'Show Line Diff'
 description: 'Displays the line differences between HEAD and a given commit hash'
 author: 'ILikePlayingGames'
+branding:
+  icon: git-pull-request
+  color: red
 inputs:
   commit-hash: # change this
     required: true
