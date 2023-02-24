@@ -33,7 +33,7 @@ test('validate diff algorithm', () => {
     }).toThrow()
   }
 
-  inputs = ['default', 'myers', 'minimal', 'patience', 'histogram']
+  inputs = ['', 'default', 'myers', 'minimal', 'patience', 'histogram']
   for (const input of inputs) {
     expect(validateDiffAlgorithm(input)).toEqual(input)
   }

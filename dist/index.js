@@ -154,7 +154,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseInt = exports.validateRulerWidth = exports.validateColumnWidth = exports.validateRef = exports.validateDiffAlgorithm = void 0;
 function validateDiffAlgorithm(input) {
     const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/;
-    if (diffAlgorithmPattern.test(input)) {
+    if (input === '' || diffAlgorithmPattern.test(input)) {
         return input;
     }
     else {

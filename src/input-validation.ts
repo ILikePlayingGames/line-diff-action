@@ -1,7 +1,7 @@
 export function validateDiffAlgorithm(input: string): string {
   const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/
 
-  if (diffAlgorithmPattern.test(input)) {
+  if (input === '' || diffAlgorithmPattern.test(input)) {
     return input
   } else {
     throw new Error(
