@@ -36,8 +36,6 @@ of the `fetch-depth` parameter.
 
 ## Diff Specific Commit and HEAD
 
-
-
 ```yaml
   - uses: actions/checkout@v3
     with:
@@ -52,6 +50,47 @@ of the `fetch-depth` parameter.
     # Use ${{ steps.get_diff.outputs.diff }}
     # to use the formatted diff in your next step
   - run: echo ${{ steps.get_diff.outputs.diff }}
+```
+
+## Diff Two Arbitrary Commits
+
+```yaml
+- uses: actions/checkout@v3
+  with:
+    # Make sure fetch depth is set to include
+    # the commit hash below.
+    fetch-depth: 0
+# Get the formatted line-by-line diff
+- id: get_diff
+  uses: ILikePlayingGames/line-diff
+  with:
+    commit-hash: '7a118f3040c7cbe7373bc03783a3e65d5cd42cd4'
+    second-commit-hash: 'a757538ac02bdb031ad72c00f7966bffa1f4349b'
+  # Use ${{ steps.get_diff.outputs.diff }}
+  # to use the formatted diff in your next step
+- run: echo ${{ steps.get_diff.outputs.diff }}
+```
+
+## Diff With Customized Options
+
+```yaml
+- uses: actions/checkout@v3
+  with:
+    # Make sure fetch depth is set to include
+    # the commit hash below.
+    fetch-depth: 0
+# Get the formatted line-by-line diff
+- id: get_diff
+  uses: ILikePlayingGames/line-diff
+  with:
+    commit-hash: '7a118f3040c7cbe7373bc03783a3e65d5cd42cd4'
+    second-commit-hash: 'a757538ac02bdb031ad72c00f7966bffa1f4349b'
+    diff-algorithm: 'minimal'
+    column-width: '120'
+    ruler-width: '80'
+  # Use ${{ steps.get_diff.outputs.diff }}
+  # to use the formatted diff in your next step
+- run: echo ${{ steps.get_diff.outputs.diff }}
 ```
 
 # Credits

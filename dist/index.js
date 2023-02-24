@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.makeFileExecutable = exports.doesCommitExist = void 0;
+exports.setRulerWidth = exports.makeFileExecutable = exports.doesCommitExist = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
 const core = __importStar(__nccwpck_require__(2186));
 function doesCommitExist(hash) {
@@ -65,6 +65,12 @@ function makeFileExecutable(path) {
     });
 }
 exports.makeFileExecutable = makeFileExecutable;
+function setRulerWidth(rulerWidth) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec.exec(`git config --global diff-so-fancy.rulerWidth ${rulerWidth}`);
+    });
+}
+exports.setRulerWidth = setRulerWidth;
 
 
 /***/ }),
@@ -107,16 +113,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDiffBetweenCommitAndHead = exports.getDiffBetweenCommits = void 0;
+exports.getDiffBetweenCommits = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
-function getDiffBetweenCommits(hashOne, hashTwo) {
+const command_line_tools_1 = __nccwpck_require__(260);
+function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm, columnWidth, rulerWidth) {
     return __awaiter(this, void 0, void 0, function* () {
+        let args = `-u ${hashOne} ${hashTwo}`;
+        if (diffAlgorithm !== '') {
+            args = `${args} --diff-algorithm=${diffAlgorithm}`;
+        }
+        if (columnWidth) {
+            args = `${args} --stat=${columnWidth}`;
+        }
+        if (rulerWidth || rulerWidth === 0) {
+            yield (0, command_line_tools_1.setRulerWidth)(rulerWidth);
+        }
         const getDiffOutput = yield exec.getExecOutput(
         /*
         Workaround for @actions/exec not supporting pipes
         Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
          */
-        `/bin/bash -c "git diff -u ${hashOne} ${hashTwo} | diff-so-fancy"`);
+        `/bin/bash -c "git diff ${args} | diff-so-fancy"`);
         if (getDiffOutput.exitCode !== 0) {
             throw new Error(getDiffOutput.stderr);
         }
@@ -124,12 +141,76 @@ function getDiffBetweenCommits(hashOne, hashTwo) {
     });
 }
 exports.getDiffBetweenCommits = getDiffBetweenCommits;
-function getDiffBetweenCommitAndHead(hash) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return getDiffBetweenCommits(hash, 'HEAD');
-    });
+
+
+/***/ }),
+
+/***/ 1196:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseInt = exports.validateRulerWidth = exports.validateColumnWidth = exports.validateRef = exports.validateDiffAlgorithm = void 0;
+function validateDiffAlgorithm(input) {
+    const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/;
+    if (diffAlgorithmPattern.test(input)) {
+        return input;
+    }
+    else {
+        throw new Error(`'${input}' isn't a valid diff algorithm, see 
+      https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---diff-algorithmpatienceminimalhistogrammyers for options`);
+    }
 }
-exports.getDiffBetweenCommitAndHead = getDiffBetweenCommitAndHead;
+exports.validateDiffAlgorithm = validateDiffAlgorithm;
+function validateRef(fieldName, input) {
+    const refAllowedCharacterPattern = /^[@~^/\-a-z\d]+$/;
+    if (refAllowedCharacterPattern.test(input)) {
+        return input;
+    }
+    else {
+        throw new Error(`'${input}' is not a valid git revision for \`${fieldName}\`.`);
+    }
+}
+exports.validateRef = validateRef;
+function validateColumnWidth(input) {
+    const columnWidthInt = parseInt('column-width', input);
+    if (columnWidthInt && columnWidthInt > 0) {
+        return columnWidthInt;
+    }
+    else {
+        throw new Error('`column-width` is undefined. Please create an issue.');
+    }
+}
+exports.validateColumnWidth = validateColumnWidth;
+function validateRulerWidth(columnWidth, rulerWidth) {
+    if (rulerWidth || rulerWidth === 0) {
+        if (rulerWidth >= 0 && rulerWidth <= columnWidth) {
+            return rulerWidth;
+        }
+        else {
+            throw new Error('Ruler width must be greater than or equal to zero and equal to or less then column width.');
+        }
+    }
+    // The ruler width is optional, so it's fine if it's missing
+}
+exports.validateRulerWidth = validateRulerWidth;
+function parseInt(fieldName, input) {
+    const parsedNumber = Number.parseInt(input);
+    if (!isNaN(parsedNumber)) {
+        // Actions input is '' if not defined
+        if (input === '') {
+            return undefined;
+        }
+        else {
+            return parsedNumber;
+        }
+    }
+    else {
+        throw new Error(`${input} isn't a valid integer for \`${fieldName}\`.`);
+    }
+}
+exports.parseInt = parseInt;
 
 
 /***/ }),
@@ -173,49 +254,37 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const tc = __importStar(__nccwpck_require__(7784));
 const tools = __importStar(__nccwpck_require__(260));
 const diff_1 = __nccwpck_require__(2484);
-function downloadDiffSoFancy() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const diffSoFancyPath = yield tc.downloadTool('https://github.com/so-fancy/diff-so-fancy/releases/download/v1.4.3/diff-so-fancy');
-        core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`);
-        const cachePath = yield tc.cacheFile(diffSoFancyPath, 'diff-so-fancy', 'diff-so-fancy', '1.4.3');
-        core.debug(`cache path: ${cachePath}`);
-        yield tools.makeFileExecutable(`${cachePath}/diff-so-fancy`);
-        return cachePath;
-    });
-}
-function loadDiffSoFancy() {
-    return __awaiter(this, void 0, void 0, function* () {
-        let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3');
-        if (diffSoFancyDir !== '') {
-            core.debug(`diff-so-fancy found at ${diffSoFancyDir}`);
-        }
-        if (diffSoFancyDir === '') {
-            core.info(`diff-so-fancy not found in cache, downloading...`);
-            diffSoFancyDir = yield downloadDiffSoFancy();
-            core.info(`download finished`);
-        }
-        core.addPath(diffSoFancyDir);
-    });
-}
+const input_validation_1 = __nccwpck_require__(1196);
+const setup_diff_so_fancy_1 = __nccwpck_require__(6007);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield loadDiffSoFancy();
-            const commitHash = core.getInput('commit-hash');
+            const commitHash = (0, input_validation_1.validateRef)('commit-hash', core.getInput('commit-hash'));
+            const secondCommitHash = (0, input_validation_1.validateRef)('second-commit-hash', core.getInput('second-commit-hash'));
+            const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
+            const columnWidth = (0, input_validation_1.validateColumnWidth)(core.getInput('column-width'));
+            const rulerWidth = (0, input_validation_1.validateRulerWidth)(columnWidth, (0, input_validation_1.parseInt)('ruler-width', core.getInput('ruler-width')));
+            yield (0, setup_diff_so_fancy_1.loadDiffSoFancy)(rulerWidth);
             let diff = '';
             if (yield tools.doesCommitExist(commitHash)) {
-                // diff-so-fancy needs this variable for ANSI
-                // It's not defined on GitHub runners
-                if (process.env.RUNNER_OS !== undefined) {
-                    process.env.TERM = 'xterm-256color';
+                if (yield tools.doesCommitExist(secondCommitHash)) {
+                    // diff-so-fancy needs this variable for ANSI
+                    // It's not defined on GitHub runners
+                    if (process.env.RUNNER_OS !== undefined) {
+                        process.env.TERM = 'xterm-256color';
+                    }
+                    diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm, columnWidth, rulerWidth);
                 }
-                diff = yield (0, diff_1.getDiffBetweenCommitAndHead)(commitHash);
+                else {
+                    core.setFailed(`Commit ${secondCommitHash} wasn't found.`);
+                    return;
+                }
             }
             else {
                 core.setFailed(`Commit ${commitHash} wasn't found.`);
+                return;
             }
             core.setOutput('diff', diff);
             core.info(diff);
@@ -227,6 +296,86 @@ function run() {
     });
 }
 run();
+
+
+/***/ }),
+
+/***/ 6007:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.loadDiffSoFancy = void 0;
+const tc = __importStar(__nccwpck_require__(7784));
+const core = __importStar(__nccwpck_require__(2186));
+const tools = __importStar(__nccwpck_require__(260));
+const command_line_tools_1 = __nccwpck_require__(260);
+function downloadDiffSoFancy() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const diffSoFancyPath = yield tc.downloadTool('https://github.com/so-fancy/diff-so-fancy/releases/download/v1.4.3/diff-so-fancy');
+        core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`);
+        const cachePath = yield tc.cacheFile(diffSoFancyPath, 'diff-so-fancy', 'diff-so-fancy', '1.4.3');
+        core.debug(`cache path: ${cachePath}`);
+        yield tools.makeFileExecutable(`${cachePath}/diff-so-fancy`);
+        return cachePath;
+    });
+}
+function loadDiffSoFancy(rulerWidth) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3');
+        if (diffSoFancyDir !== '') {
+            core.debug(`diff-so-fancy found at ${diffSoFancyDir}`);
+        }
+        if (diffSoFancyDir === '') {
+            core.info(`diff-so-fancy not found in cache, downloading...`);
+            diffSoFancyDir = yield downloadDiffSoFancy();
+            core.info(`download finished`);
+        }
+        core.addPath(diffSoFancyDir);
+        if (rulerWidth) {
+            try {
+                yield (0, command_line_tools_1.setRulerWidth)(rulerWidth);
+            }
+            catch (error) {
+                throw new Error(`Setting ruler width failed with message ${error === null || error === void 0 ? void 0 : error.message}`);
+            }
+        }
+    });
+}
+exports.loadDiffSoFancy = loadDiffSoFancy;
 
 
 /***/ }),

@@ -21,3 +21,7 @@ export async function doesCommitExist(hash: string): Promise<boolean> {
 export async function makeFileExecutable(path: string): Promise<void> {
   await exec.exec(`chmod +x ${path}`)
 }
+
+export async function setRulerWidth(rulerWidth: number): Promise<void> {
+  await exec.exec(`git config --global diff-so-fancy.rulerWidth ${rulerWidth}`)
+}

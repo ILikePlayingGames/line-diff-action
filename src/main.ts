@@ -1,56 +1,60 @@
 import * as core from '@actions/core'
-import * as tc from '@actions/tool-cache'
 import * as tools from './command-line-tools'
-import {getDiffBetweenCommitAndHead} from './diff'
-
-async function downloadDiffSoFancy(): Promise<string> {
-  const diffSoFancyPath = await tc.downloadTool(
-    'https://github.com/so-fancy/diff-so-fancy/releases/download/v1.4.3/diff-so-fancy'
-  )
-  core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`)
-
-  const cachePath = await tc.cacheFile(
-    diffSoFancyPath,
-    'diff-so-fancy',
-    'diff-so-fancy',
-    '1.4.3'
-  )
-  core.debug(`cache path: ${cachePath}`)
-  await tools.makeFileExecutable(`${cachePath}/diff-so-fancy`)
-
-  return cachePath
-}
-
-async function loadDiffSoFancy(): Promise<void> {
-  let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3')
-
-  if (diffSoFancyDir !== '') {
-    core.debug(`diff-so-fancy found at ${diffSoFancyDir}`)
-  }
-
-  if (diffSoFancyDir === '') {
-    core.info(`diff-so-fancy not found in cache, downloading...`)
-    diffSoFancyDir = await downloadDiffSoFancy()
-    core.info(`download finished`)
-  }
-  core.addPath(diffSoFancyDir)
-}
+import {getDiffBetweenCommits} from './diff'
+import {
+  parseInt,
+  validateColumnWidth,
+  validateDiffAlgorithm,
+  validateRef,
+  validateRulerWidth
+} from './input-validation'
+import {loadDiffSoFancy} from './setup-diff-so-fancy'
 
 async function run(): Promise<void> {
   try {
-    await loadDiffSoFancy()
-    const commitHash: string = core.getInput('commit-hash')
+    const commitHash: string = validateRef(
+      'commit-hash',
+      core.getInput('commit-hash')
+    )
+    const secondCommitHash: string = validateRef(
+      'second-commit-hash',
+      core.getInput('second-commit-hash')
+    )
+    const diffAlgorithm: string = validateDiffAlgorithm(
+      core.getInput('diff-algorithm')
+    )
+    const columnWidth: number = validateColumnWidth(
+      core.getInput('column-width')
+    )
+    const rulerWidth: number | undefined = validateRulerWidth(
+      columnWidth,
+      parseInt('ruler-width', core.getInput('ruler-width'))
+    )
+    await loadDiffSoFancy(rulerWidth)
+
     let diff = ''
 
     if (await tools.doesCommitExist(commitHash)) {
-      // diff-so-fancy needs this variable for ANSI
-      // It's not defined on GitHub runners
-      if (process.env.RUNNER_OS !== undefined) {
-        process.env.TERM = 'xterm-256color'
+      if (await tools.doesCommitExist(secondCommitHash)) {
+        // diff-so-fancy needs this variable for ANSI
+        // It's not defined on GitHub runners
+        if (process.env.RUNNER_OS !== undefined) {
+          process.env.TERM = 'xterm-256color'
+        }
+        diff = await getDiffBetweenCommits(
+          commitHash,
+          secondCommitHash,
+          diffAlgorithm,
+          columnWidth,
+          rulerWidth
+        )
+      } else {
+        core.setFailed(`Commit ${secondCommitHash} wasn't found.`)
+        return
       }
-      diff = await getDiffBetweenCommitAndHead(commitHash)
     } else {
       core.setFailed(`Commit ${commitHash} wasn't found.`)
+      return
     }
 
     core.setOutput('diff', diff)
