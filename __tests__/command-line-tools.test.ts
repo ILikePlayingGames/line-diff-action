@@ -52,17 +52,19 @@ test('validate column width', () => {
 test('validate ruler width', () => {
   // valid
   let columnWidths: number[] = [80, 80, 80]
-  let rulerWidths = [50, 0, undefined]
+  let rulerWidths = ['50', '0', '80']
 
   for (let i = 0; i < 3; i++) {
     expect(validateRulerWidth(columnWidths[i], rulerWidths[i])).toEqual(
-      rulerWidths[i]
+      Number.parseInt(rulerWidths[i])
     )
   }
 
+  expect(validateRulerWidth(80, '')).toEqual(undefined)
+
   // invalid
   let invalidColumnWidths = [1, 6, 2]
-  rulerWidths = [2, -8, 5]
+  rulerWidths = ['2', '-8', '5']
 
   for (let i = 0; i < 3; i++) {
     expect(() => {

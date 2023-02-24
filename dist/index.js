@@ -122,10 +122,10 @@ function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm, columnWidth, rul
         if (diffAlgorithm !== '') {
             args = `${args} --diff-algorithm=${diffAlgorithm}`;
         }
-        if (columnWidth) {
+        if (columnWidth !== undefined) {
             args = `${args} --stat=${columnWidth}`;
         }
-        if (rulerWidth || rulerWidth === 0) {
+        if (rulerWidth !== undefined) {
             yield (0, command_line_tools_1.setRulerWidth)(rulerWidth);
         }
         const getDiffOutput = yield exec.getExecOutput(
@@ -146,12 +146,13 @@ exports.getDiffBetweenCommits = getDiffBetweenCommits;
 /***/ }),
 
 /***/ 1196:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseInt = exports.validateRulerWidth = exports.validateColumnWidth = exports.validateRef = exports.validateDiffAlgorithm = void 0;
+const command_line_tools_1 = __nccwpck_require__(260);
 function validateDiffAlgorithm(input) {
     const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/;
     if (input === '' || diffAlgorithmPattern.test(input)) {
@@ -166,7 +167,12 @@ exports.validateDiffAlgorithm = validateDiffAlgorithm;
 function validateRef(fieldName, input) {
     const refAllowedCharacterPattern = /^[@~^/\-a-z\d]+$/;
     if (refAllowedCharacterPattern.test(input)) {
-        return input;
+        if (!(0, command_line_tools_1.doesCommitExist)(input)) {
+            throw new Error(`Commit ${input} wasn't found for field ${fieldName}.`);
+        }
+        else {
+            return input;
+        }
     }
     else {
         throw new Error(`'${input}' is not a valid git revision for \`${fieldName}\`.`);
@@ -174,17 +180,23 @@ function validateRef(fieldName, input) {
 }
 exports.validateRef = validateRef;
 function validateColumnWidth(input) {
-    const columnWidthInt = parseInt('column-width', input);
-    if (columnWidthInt && columnWidthInt > 0) {
-        return columnWidthInt;
+    const columnWidthInt = parseInt('column-width', true, input);
+    if (columnWidthInt !== undefined) {
+        if (columnWidthInt >= 1) {
+            return columnWidthInt;
+        }
+        else {
+            throw new Error('Column width must be greater than or equal to 1.');
+        }
     }
     else {
         throw new Error('`column-width` is undefined. Please create an issue.');
     }
 }
 exports.validateColumnWidth = validateColumnWidth;
-function validateRulerWidth(columnWidth, rulerWidth) {
-    if (rulerWidth || rulerWidth === 0) {
+function validateRulerWidth(columnWidth, rulerWidthString) {
+    const rulerWidth = parseInt('ruler-width', false, rulerWidthString);
+    if (rulerWidth !== undefined) {
         if (rulerWidth >= 0 && rulerWidth <= columnWidth) {
             return rulerWidth;
         }
@@ -195,7 +207,7 @@ function validateRulerWidth(columnWidth, rulerWidth) {
     // The ruler width is optional, so it's fine if it's missing
 }
 exports.validateRulerWidth = validateRulerWidth;
-function parseInt(fieldName, input) {
+function parseInt(fieldName, fieldIsRequired, input) {
     const parsedNumber = Number.parseInt(input);
     if (!isNaN(parsedNumber)) {
         // Actions input is '' if not defined
@@ -207,7 +219,13 @@ function parseInt(fieldName, input) {
         }
     }
     else {
-        throw new Error(`${input} isn't a valid integer for \`${fieldName}\`.`);
+        // Actions inputs are '' if not provided
+        if (input === '' && !fieldIsRequired) {
+            return undefined;
+        }
+        else {
+            throw new Error(`${input} isn't a valid integer for \`${fieldName}\`.`);
+        }
     }
 }
 exports.parseInt = parseInt;
@@ -254,7 +272,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const tools = __importStar(__nccwpck_require__(260));
 const diff_1 = __nccwpck_require__(2484);
 const input_validation_1 = __nccwpck_require__(1196);
 const setup_diff_so_fancy_1 = __nccwpck_require__(6007);
@@ -265,27 +282,9 @@ function run() {
             const secondCommitHash = (0, input_validation_1.validateRef)('second-commit-hash', core.getInput('second-commit-hash'));
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
             const columnWidth = (0, input_validation_1.validateColumnWidth)(core.getInput('column-width'));
-            const rulerWidth = (0, input_validation_1.validateRulerWidth)(columnWidth, (0, input_validation_1.parseInt)('ruler-width', core.getInput('ruler-width')));
+            const rulerWidth = (0, input_validation_1.validateRulerWidth)(columnWidth, core.getInput('ruler-width'));
             yield (0, setup_diff_so_fancy_1.loadDiffSoFancy)(rulerWidth);
-            let diff = '';
-            if (yield tools.doesCommitExist(commitHash)) {
-                if (yield tools.doesCommitExist(secondCommitHash)) {
-                    // diff-so-fancy needs this variable for ANSI
-                    // It's not defined on GitHub runners
-                    if (process.env.RUNNER_OS !== undefined) {
-                        process.env.TERM = 'xterm-256color';
-                    }
-                    diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm, columnWidth, rulerWidth);
-                }
-                else {
-                    core.setFailed(`Commit ${secondCommitHash} wasn't found.`);
-                    return;
-                }
-            }
-            else {
-                core.setFailed(`Commit ${commitHash} wasn't found.`);
-                return;
-            }
+            const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm, columnWidth, rulerWidth);
             core.setOutput('diff', diff);
             core.info(diff);
         }
@@ -365,7 +364,12 @@ function loadDiffSoFancy(rulerWidth) {
             core.info(`download finished`);
         }
         core.addPath(diffSoFancyDir);
-        if (rulerWidth) {
+        // diff-so-fancy needs this variable for ANSI
+        // It's not defined on GitHub runners
+        if (process.env.RUNNER_OS !== undefined) {
+            process.env.TERM = 'xterm-256color';
+        }
+        if (rulerWidth !== undefined) {
             try {
                 yield (0, command_line_tools_1.setRulerWidth)(rulerWidth);
             }

@@ -5,18 +5,18 @@ export async function getDiffBetweenCommits(
   hashOne: string,
   hashTwo: string,
   diffAlgorithm: string,
-  columnWidth: number | undefined,
-  rulerWidth: number | undefined
+  columnWidth?: number,
+  rulerWidth?: number
 ): Promise<string> {
   let args = `-u ${hashOne} ${hashTwo}`
 
   if (diffAlgorithm !== '') {
     args = `${args} --diff-algorithm=${diffAlgorithm}`
   }
-  if (columnWidth) {
+  if (columnWidth !== undefined) {
     args = `${args} --stat=${columnWidth}`
   }
-  if (rulerWidth || rulerWidth === 0) {
+  if (rulerWidth !== undefined) {
     await setRulerWidth(rulerWidth)
   }
 

@@ -35,7 +35,13 @@ export async function loadDiffSoFancy(rulerWidth?: number): Promise<void> {
   }
   core.addPath(diffSoFancyDir)
 
-  if (rulerWidth) {
+  // diff-so-fancy needs this variable for ANSI
+  // It's not defined on GitHub runners
+  if (process.env.RUNNER_OS !== undefined) {
+    process.env.TERM = 'xterm-256color'
+  }
+
+  if (rulerWidth !== undefined) {
     try {
       await setRulerWidth(rulerWidth)
     } catch (error) {
