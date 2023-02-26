@@ -38,7 +38,7 @@ export async function loadDiffSoFancy(rulerWidth?: number): Promise<void> {
   // diff-so-fancy needs this variable for ANSI
   // It's not defined on GitHub runners
   if (process.env.RUNNER_OS !== undefined) {
-    process.env.TERM = 'xterm-256color'
+    process.env.TERM = 'xterm'
   }
 
   if (rulerWidth !== undefined) {
