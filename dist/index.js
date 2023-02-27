@@ -134,18 +134,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getDiffBetweenCommits = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
-const command_line_tools_1 = __nccwpck_require__(260);
 function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm, columnWidth, rulerWidth) {
     return __awaiter(this, void 0, void 0, function* () {
-        let args = `-u ${hashOne} ${hashTwo}`;
+        let args = `${hashOne} ${hashTwo}`;
         if (diffAlgorithm !== '') {
-            args = `${args} --diff-algorithm=${diffAlgorithm}`;
+            args = `${args}`;
         }
         if (columnWidth !== undefined) {
-            args = `${args} --stat=${columnWidth}`;
+            args = `${args}`;
         }
         if (rulerWidth !== undefined) {
-            yield (0, command_line_tools_1.setRulerWidth)(rulerWidth);
+            args = `${args} -w ${rulerWidth}`;
         }
         const getDiffOutput = yield exec.getExecOutput(
         /*
