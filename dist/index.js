@@ -395,7 +395,8 @@ function setupDelta() {
             'git config --global interactive.diffFilter "delta --color-only"',
             'git config --global delta.navigate "false"',
             'git config --global merge.conflictStyle "diff3"',
-            'git config --global diff.colorMoved "default"'
+            'git config --global diff.colorMoved "default"',
+            'git config --global --list'
         ]);
     });
 }
