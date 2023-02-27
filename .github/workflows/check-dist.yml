@@ -11,9 +11,12 @@ on:
       - main
     paths-ignore:
       - '**.md'
+      - '.github/**.yml'
   pull_request:
+    types: review_requested
     paths-ignore:
       - '**.md'
+      - '.github/**.yml'
   workflow_dispatch:
 
 jobs:
