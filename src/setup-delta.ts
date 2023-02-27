@@ -52,6 +52,10 @@ async function setupDelta(): Promise<void> {
     'git config --global merge.conflictStyle "diff3"',
     'git config --global diff.colorMoved "default"'
   ])
+
+  if (core.isDebug()) {
+    await execCommands(['git config --global --list'])
+  }
 }
 
 export async function loadDelta(): Promise<void> {
