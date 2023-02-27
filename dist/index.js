@@ -82,6 +82,7 @@ function execCommands(commands) {
     return __awaiter(this, void 0, void 0, function* () {
         for (const command of commands) {
             const commandOutput = yield exec.getExecOutput(command);
+            core.debug(commandOutput.stdout);
             if (commandOutput.exitCode !== 0) {
                 throw new Error(commandOutput.stderr);
             }
@@ -364,27 +365,25 @@ function downloadDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         let deltaPath;
         let deltaExtractedFolder;
-        let executableName;
+        let deltaPlatform;
         if (process.platform === 'win32') {
-            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-pc-windows-msvc.zip`);
+            deltaPlatform = 'x86_64-pc-windows-msvc';
+            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.zip`);
             deltaExtractedFolder = yield tc.extractZip(deltaPath);
-            executableName = 'delta.exe';
         }
         else if (process.platform === 'darwin') {
-            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-apple-darwin.tar.gz`);
+            deltaPlatform = 'x86_64-apple-darwin';
+            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`);
             deltaExtractedFolder = yield tc.extractTar(deltaPath);
-            executableName = 'delta';
         }
         else {
-            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-unknown-linux-gnu.tar.gz`);
+            deltaPlatform = 'x86_64-unknown-linux-gnu';
+            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`);
             deltaExtractedFolder = yield tc.extractTar(deltaPath);
-            executableName = 'delta';
-        }
-        if (process.platform !== 'win32') {
-            yield (0, command_line_tools_1.makeFileExecutable)(`${deltaExtractedFolder}/${executableName}`);
         }
         core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`);
-        const cachedPath = yield tc.cacheFile(deltaExtractedFolder, executableName, 'delta', deltaVersion);
+        deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-${deltaPlatform}`;
+        const cachedPath = yield tc.cacheDir(deltaExtractedFolder, 'delta', deltaVersion);
         core.debug(`cached path: ${cachedPath}`);
         return cachedPath;
     });
@@ -404,7 +403,7 @@ function loadDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         let deltaDir = tc.find('delta', deltaVersion);
         if (deltaDir !== '') {
-            core.debug(`delta found at ${deltaDir}`);
+            core.info(`delta found at ${deltaDir}`);
         }
         else {
             core.info(`delta ${deltaVersion} not found in cache, downloading...`);

@@ -31,6 +31,8 @@ async function downloadDelta(): Promise<string> {
 
   core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`)
 
+  deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-${deltaPlatform}`
+
   const cachedPath = await tc.cacheDir(
     deltaExtractedFolder,
     'delta',
@@ -56,7 +58,7 @@ export async function loadDelta(): Promise<void> {
   let deltaDir = tc.find('delta', deltaVersion)
 
   if (deltaDir !== '') {
-    core.debug(`delta found at ${deltaDir}`)
+    core.info(`delta found at ${deltaDir}`)
   } else {
     core.info(`delta ${deltaVersion} not found in cache, downloading...`)
     deltaDir = await downloadDelta()
