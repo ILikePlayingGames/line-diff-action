@@ -11,7 +11,7 @@ on: # rebuild any PRs and main branch changes
     paths-ignore:
       - '**.md'
       - '.github/**.yml'
-  workflow-dispatch:
+  workflow_dispatch:
 
 jobs:
   rapid-test: # make sure the action works on a clean machine without building
