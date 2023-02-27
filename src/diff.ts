@@ -1,5 +1,4 @@
 import * as exec from '@actions/exec'
-import {setRulerWidth} from './command-line-tools'
 
 export async function getDiffBetweenCommits(
   hashOne: string,
@@ -8,16 +7,16 @@ export async function getDiffBetweenCommits(
   columnWidth?: number,
   rulerWidth?: number
 ): Promise<string> {
-  let args = `-u ${hashOne} ${hashTwo}`
+  let args = `${hashOne} ${hashTwo}`
 
   if (diffAlgorithm !== '') {
-    args = `${args} --diff-algorithm=${diffAlgorithm}`
+    args = `${args}`
   }
   if (columnWidth !== undefined) {
-    args = `${args} --stat=${columnWidth}`
+    args = `${args}`
   }
   if (rulerWidth !== undefined) {
-    await setRulerWidth(rulerWidth)
+    args = `${args} -w ${rulerWidth}`
   }
 
   const getDiffOutput: exec.ExecOutput = await exec.getExecOutput(
