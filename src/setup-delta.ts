@@ -7,35 +7,42 @@ const deltaVersion = '0.15.1'
 async function downloadDelta(): Promise<string> {
   let deltaPath
   let deltaExtractedFolder
+  let deltaPlatform
   let executableName
 
   if (process.platform === 'win32') {
+    deltaPlatform = 'x86_64-pc-windows-msvc'
     deltaPath = await tc.downloadTool(
-      `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-pc-windows-msvc.zip`
+      `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.zip`
     )
-    deltaExtractedFolder = await tc.extractZip(deltaPath)
-    deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-x86_64-pc-windows-msvc`
+    deltaExtractedFolder = `${await tc.extractZip(
+      deltaPath
+    )}/delta-${deltaVersion}-${deltaPlatform}`
     executableName = 'delta.exe'
   } else if (process.platform === 'darwin') {
+    deltaPlatform = 'x86_64-apple-darwin'
     deltaPath = await tc.downloadTool(
-      `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-apple-darwin.tar.gz`
+      `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`
     )
-    deltaExtractedFolder = await tc.extractTar(deltaPath)
-    deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-x86_64-apple-darwin`
+    deltaExtractedFolder = `${await tc.extractTar(
+      deltaPath
+    )}/delta-${deltaVersion}-${deltaPlatform}`
     executableName = 'delta'
   } else {
+    deltaPlatform = 'x86_64-unknown-linux-gnu'
     deltaPath = await tc.downloadTool(
-      `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-unknown-linux-gnu.tar.gz`
+      `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`
     )
-    deltaExtractedFolder = await tc.extractTar(deltaPath)
-    deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-x86_64-unknown-linux-gnu`
+    deltaExtractedFolder = `${await tc.extractTar(
+      deltaPath
+    )}/delta-${deltaVersion}-${deltaPlatform}`
     executableName = 'delta'
   }
 
   core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`)
 
   const cachedPath = await tc.cacheFile(
-    deltaExtractedFolder,
+    `${deltaExtractedFolder}/${executableName}`,
     executableName,
     'delta',
     deltaVersion
