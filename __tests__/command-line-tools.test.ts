@@ -7,6 +7,7 @@ import {
   validateRef,
   validateRulerWidth
 } from '../src/input-validation'
+import {loadDelta} from '../src/setup-delta'
 
 test('validate hash', () => {
   // invalid

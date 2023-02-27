@@ -391,11 +391,11 @@ function downloadDelta() {
 function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         yield (0, command_line_tools_1.execCommands)([
-            'git config --local core.pager "delta"',
-            'git config --local interactive.diffFilter "delta --color-only"',
-            'git config --local delta.features "false"',
-            'git config --local merge.conflictStyle "diff3"',
-            'git config --local diff.colorMoved "default"'
+            'git config --global core.pager "delta"',
+            'git config --global interactive.diffFilter "delta --color-only"',
+            'git config --global delta.navigate "false"',
+            'git config --global merge.conflictStyle "diff3"',
+            'git config --global diff.colorMoved "default"'
         ]);
     });
 }
