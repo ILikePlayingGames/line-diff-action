@@ -6,7 +6,7 @@ import {
   validateRef,
   validateRulerWidth
 } from './input-validation'
-import {loadDiffSoFancy} from './setup-diff-so-fancy'
+import {loadDelta} from './setup-delta'
 
 async function run(): Promise<void> {
   try {
@@ -28,7 +28,7 @@ async function run(): Promise<void> {
       columnWidth,
       core.getInput('ruler-width')
     )
-    await loadDiffSoFancy(rulerWidth)
+    await loadDelta()
 
     const diff = await getDiffBetweenCommits(
       commitHash,

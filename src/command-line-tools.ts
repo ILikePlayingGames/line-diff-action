@@ -25,3 +25,19 @@ export async function makeFileExecutable(path: string): Promise<void> {
 export async function setRulerWidth(rulerWidth: number): Promise<void> {
   await exec.exec(`git config --global diff-so-fancy.rulerWidth ${rulerWidth}`)
 }
+
+/**
+ * Executes a list of command line commands.
+ * Command output isn't captured, use only commands where the
+ * output isn't required.
+ *
+ * @param commands the commands to execute
+ */
+export async function execCommands(commands: string[]): Promise<void> {
+  for (const command of commands) {
+    const commandOutput: exec.ExecOutput = await exec.getExecOutput(command)
+    if (commandOutput.exitCode !== 0) {
+      throw new Error(commandOutput.stderr)
+    }
+  }
+}

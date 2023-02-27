@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setRulerWidth = exports.makeFileExecutable = exports.doesCommitExist = void 0;
+exports.execCommands = exports.setRulerWidth = exports.makeFileExecutable = exports.doesCommitExist = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
 const core = __importStar(__nccwpck_require__(2186));
 function doesCommitExist(hash) {
@@ -71,6 +71,24 @@ function setRulerWidth(rulerWidth) {
     });
 }
 exports.setRulerWidth = setRulerWidth;
+/**
+ * Executes a list of command line commands.
+ * Command output isn't captured, use only commands where the
+ * output isn't required.
+ *
+ * @param commands the commands to execute
+ */
+function execCommands(commands) {
+    return __awaiter(this, void 0, void 0, function* () {
+        for (const command of commands) {
+            const commandOutput = yield exec.getExecOutput(command);
+            if (commandOutput.exitCode !== 0) {
+                throw new Error(commandOutput.stderr);
+            }
+        }
+    });
+}
+exports.execCommands = execCommands;
 
 
 /***/ }),
@@ -133,7 +151,7 @@ function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm, columnWidth, rul
         Workaround for @actions/exec not supporting pipes
         Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
          */
-        `/bin/bash -c "git diff ${args}"`);
+        `git diff ${args}`);
         if (getDiffOutput.exitCode !== 0) {
             throw new Error(getDiffOutput.stderr);
         }
@@ -274,7 +292,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const diff_1 = __nccwpck_require__(2484);
 const input_validation_1 = __nccwpck_require__(1196);
-const setup_diff_so_fancy_1 = __nccwpck_require__(6007);
+const setup_delta_1 = __nccwpck_require__(5827);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -283,7 +301,7 @@ function run() {
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
             const columnWidth = (0, input_validation_1.validateColumnWidth)(core.getInput('column-width'));
             const rulerWidth = (0, input_validation_1.validateRulerWidth)(columnWidth, core.getInput('ruler-width'));
-            yield (0, setup_diff_so_fancy_1.loadDiffSoFancy)(rulerWidth);
+            yield (0, setup_delta_1.loadDelta)();
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm, columnWidth, rulerWidth);
             core.setOutput('diff', diff);
             core.info(diff);
@@ -299,7 +317,7 @@ run();
 
 /***/ }),
 
-/***/ 6007:
+/***/ 5827:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -337,49 +355,66 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.loadDiffSoFancy = void 0;
+exports.loadDelta = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
-const tools = __importStar(__nccwpck_require__(260));
 const command_line_tools_1 = __nccwpck_require__(260);
-function downloadDiffSoFancy() {
+const deltaVersion = '0.15.1';
+function downloadDelta() {
     return __awaiter(this, void 0, void 0, function* () {
-        const diffSoFancyPath = yield tc.downloadTool('https://github.com/so-fancy/diff-so-fancy/releases/download/v1.4.3/diff-so-fancy');
-        core.debug(`diff-so-fancy download path: ${diffSoFancyPath}`);
-        const cachePath = yield tc.cacheFile(diffSoFancyPath, 'diff-so-fancy', 'diff-so-fancy', '1.4.3');
-        core.debug(`cache path: ${cachePath}`);
-        yield tools.makeFileExecutable(`${cachePath}/diff-so-fancy`);
-        return cachePath;
+        let deltaPath;
+        let deltaExtractedFolder;
+        let executableName;
+        if (process.platform === 'win32') {
+            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-pc-windows-msvc.zip`);
+            deltaExtractedFolder = yield tc.extractZip(deltaPath);
+            executableName = 'delta.exe';
+        }
+        else if (process.platform === 'darwin') {
+            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-apple-darwin.tar.gz`);
+            deltaExtractedFolder = yield tc.extractTar(deltaPath);
+            executableName = 'delta';
+        }
+        else {
+            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-unknown-linux-gnu.tar.gz`);
+            deltaExtractedFolder = yield tc.extractTar(deltaPath);
+            executableName = 'delta';
+        }
+        if (process.platform !== 'win32') {
+            yield (0, command_line_tools_1.makeFileExecutable)(`${deltaExtractedFolder}/${executableName}`);
+        }
+        core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`);
+        const cachedPath = yield tc.cacheFile(deltaExtractedFolder, executableName, 'delta', deltaVersion);
+        core.debug(`cached path: ${cachedPath}`);
+        return cachedPath;
     });
 }
-function loadDiffSoFancy(rulerWidth) {
+function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
-        let diffSoFancyDir = tc.find('diff-so-fancy', '1.4.3');
-        if (diffSoFancyDir !== '') {
-            core.debug(`diff-so-fancy found at ${diffSoFancyDir}`);
-        }
-        if (diffSoFancyDir === '') {
-            core.info(`diff-so-fancy not found in cache, downloading...`);
-            diffSoFancyDir = yield downloadDiffSoFancy();
-            core.info(`download finished`);
-        }
-        core.addPath(diffSoFancyDir);
-        // diff-so-fancy needs this variable for ANSI
-        // It's not defined on GitHub runners
-        if (process.env.RUNNER_OS !== undefined) {
-            process.env.TERM = 'xterm';
-        }
-        if (rulerWidth !== undefined) {
-            try {
-                yield (0, command_line_tools_1.setRulerWidth)(rulerWidth);
-            }
-            catch (error) {
-                throw new Error(`Setting ruler width failed with message ${error === null || error === void 0 ? void 0 : error.message}`);
-            }
-        }
+        yield (0, command_line_tools_1.execCommands)([
+            'git config --local core.pager "delta"',
+            'git config --local interactive.diffFilter "delta --color-only"',
+            'git config --local delta.features "false"',
+            'git config --local merge.conflictStyle "diff3"',
+            'git config --local diff.colorMoved "default"'
+        ]);
     });
 }
-exports.loadDiffSoFancy = loadDiffSoFancy;
+function loadDelta() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let deltaDir = tc.find('delta', deltaVersion);
+        if (deltaDir !== '') {
+            core.debug(`delta found at ${deltaDir}`);
+        }
+        else {
+            core.info(`delta ${deltaVersion} not found in cache, downloading...`);
+            deltaDir = yield downloadDelta();
+        }
+        core.addPath(deltaDir);
+        yield setupDelta();
+    });
+}
+exports.loadDelta = loadDelta;
 
 
 /***/ }),
