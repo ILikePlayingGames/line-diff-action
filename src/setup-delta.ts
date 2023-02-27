@@ -29,10 +29,6 @@ async function downloadDelta(): Promise<string> {
     executableName = 'delta'
   }
 
-  if (process.platform !== 'win32') {
-    await makeFileExecutable(`${deltaExtractedFolder}/${executableName}`)
-  }
-
   core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`)
 
   const cachedPath = await tc.cacheFile(
@@ -47,7 +43,7 @@ async function downloadDelta(): Promise<string> {
   return cachedPath
 }
 
-async function setupDelta(): Promise<void> {
+async function setupDelta(deltaDir: string): Promise<void> {
   await execCommands([
     'git config --local core.pager "delta"',
     'git config --local interactive.diffFilter "delta --color-only"',
@@ -55,6 +51,10 @@ async function setupDelta(): Promise<void> {
     'git config --local merge.conflictStyle "diff3"',
     'git config --local diff.colorMoved "default"'
   ])
+
+  if (process.platform !== 'win32') {
+    await makeFileExecutable(`${deltaDir}/delta`)
+  }
 }
 
 export async function loadDelta(): Promise<void> {
@@ -68,5 +68,5 @@ export async function loadDelta(): Promise<void> {
   }
 
   core.addPath(deltaDir)
-  await setupDelta()
+  await setupDelta(deltaDir)
 }
