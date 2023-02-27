@@ -36,6 +36,7 @@ export async function setRulerWidth(rulerWidth: number): Promise<void> {
 export async function execCommands(commands: string[]): Promise<void> {
   for (const command of commands) {
     const commandOutput: exec.ExecOutput = await exec.getExecOutput(command)
+    core.debug(commandOutput.stdout)
     if (commandOutput.exitCode !== 0) {
       throw new Error(commandOutput.stderr)
     }

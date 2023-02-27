@@ -14,18 +14,21 @@ async function downloadDelta(): Promise<string> {
       `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-pc-windows-msvc.zip`
     )
     deltaExtractedFolder = await tc.extractZip(deltaPath)
+    deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-x86_64-pc-windows-msvc`
     executableName = 'delta.exe'
   } else if (process.platform === 'darwin') {
     deltaPath = await tc.downloadTool(
       `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-apple-darwin.tar.gz`
     )
     deltaExtractedFolder = await tc.extractTar(deltaPath)
+    deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-x86_64-apple-darwin`
     executableName = 'delta'
   } else {
     deltaPath = await tc.downloadTool(
       `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-x86_64-unknown-linux-gnu.tar.gz`
     )
     deltaExtractedFolder = await tc.extractTar(deltaPath)
+    deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-x86_64-unknown-linux-gnu`
     executableName = 'delta'
   }
 
