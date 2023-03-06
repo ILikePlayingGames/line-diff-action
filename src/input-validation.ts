@@ -29,38 +29,6 @@ export function validateRef(fieldName: string, input: string): string {
   }
 }
 
-export function validateColumnWidth(input: string): number {
-  const columnWidthInt = parseInt('column-width', true, input)
-
-  if (columnWidthInt !== undefined) {
-    if (columnWidthInt >= 1) {
-      return columnWidthInt
-    } else {
-      throw new Error('Column width must be greater than or equal to 1.')
-    }
-  } else {
-    throw new Error('`column-width` is undefined. Please create an issue.')
-  }
-}
-
-export function validateRulerWidth(
-  columnWidth: number,
-  rulerWidthString: string
-): number | undefined {
-  const rulerWidth = parseInt('ruler-width', false, rulerWidthString)
-
-  if (rulerWidth !== undefined) {
-    if (rulerWidth >= 0 && rulerWidth <= columnWidth) {
-      return rulerWidth
-    } else {
-      throw new Error(
-        'Ruler width must be greater than or equal to zero and equal to or less then column width.'
-      )
-    }
-  }
-  // The ruler width is optional, so it's fine if it's missing
-}
-
 export function parseInt(
   fieldName: string,
   fieldIsRequired: boolean,
