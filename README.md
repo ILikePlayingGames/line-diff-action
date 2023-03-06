@@ -6,7 +6,9 @@
 
 ---
 
-This action gets the line by line differences between a given commit hash and HEAD. 
+This action gets the line by line differences between a given commit hash and HEAD.
+This action is designed to format output for Discord so results may look weird in other applications.
+Support for changing the Delta theme will come later.
 
 # Usage
 
@@ -71,7 +73,7 @@ of the `fetch-depth` parameter.
 - run: echo ${{ steps.get_diff.outputs.diff }}
 ```
 
-## Diff With Customized Options
+## Diff With Different Algorithm
 
 ```yaml
 - uses: actions/checkout@v3
@@ -84,10 +86,8 @@ of the `fetch-depth` parameter.
   uses: ILikePlayingGames/line-diff
   with:
     commit-hash: '7a118f3040c7cbe7373bc03783a3e65d5cd42cd4'
-    second-commit-hash: 'a757538ac02bdb031ad72c00f7966bffa1f4349b'
+    # Please see git-diff documentation for options
     diff-algorithm: 'minimal'
-    column-width: '120'
-    ruler-width: '80'
   # Use ${{ steps.get_diff.outputs.diff }}
   # to use the formatted diff in your next step
 - run: echo ${{ steps.get_diff.outputs.diff }}

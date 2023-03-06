@@ -1,11 +1,6 @@
 import * as core from '@actions/core'
 import {getDiffBetweenCommits} from './diff'
-import {
-  validateColumnWidth,
-  validateDiffAlgorithm,
-  validateRef,
-  validateRulerWidth
-} from './input-validation'
+import {validateDiffAlgorithm, validateRef} from './input-validation'
 import {loadDelta} from './setup-delta'
 
 async function run(): Promise<void> {
@@ -21,21 +16,12 @@ async function run(): Promise<void> {
     const diffAlgorithm: string = validateDiffAlgorithm(
       core.getInput('diff-algorithm')
     )
-    const columnWidth: number = validateColumnWidth(
-      core.getInput('column-width')
-    )
-    const rulerWidth: number | undefined = validateRulerWidth(
-      columnWidth,
-      core.getInput('ruler-width')
-    )
     await loadDelta()
 
     const diff = await getDiffBetweenCommits(
       commitHash,
       secondCommitHash,
-      diffAlgorithm,
-      columnWidth,
-      rulerWidth
+      diffAlgorithm
     )
 
     core.setOutput('diff', diff)
