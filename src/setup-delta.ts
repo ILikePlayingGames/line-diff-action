@@ -4,6 +4,9 @@ import {execCommands} from './command-line-tools'
 
 const deltaVersion = '0.15.1'
 
+/**
+ * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
+ */
 async function downloadDelta(): Promise<string> {
   let deltaPath
   let deltaExtractedFolder
@@ -44,14 +47,13 @@ async function downloadDelta(): Promise<string> {
   return cachedPath
 }
 
-async function setupDelta(): Promise<void> {
+/**
+ * Setup Delta with the custom theme for Discord
+ */
+export async function setupDelta(): Promise<void> {
   await execCommands([
-    'git config --global core.pager "delta"',
-    'git config --global interactive.diffFilter "delta --color-only"',
-    'git config --global delta.navigate "false"',
-    'git config --global merge.conflictStyle "diff3"',
-    'git config --global diff.colorMoved "default"',
-    'git config --list --show-origin'
+    'git config --local include.path "../dist/themes.gitconfig"',
+    'git config --local delta.features "discord"'
   ])
 }
 

@@ -15,13 +15,6 @@ inputs:
   diff-algorithm:
     required: false
     description: 'The git diff algorithm to use'
-  column-width:
-    required: false
-    default: '80'
-    description: 'The column width of the resulting formatted diff, defaults to 80'
-  ruler-width:
-    required: false
-    description: 'The width of the horizontal line below the formatted file title, defaults to `column-width`'
 outputs:
   diff:
     description: 'The formatted line differences between HEAD and a given commit hash'

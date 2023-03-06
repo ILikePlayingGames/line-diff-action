@@ -134,24 +134,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getDiffBetweenCommits = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
-function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm, columnWidth, rulerWidth) {
+function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
     return __awaiter(this, void 0, void 0, function* () {
         let args = `${hashOne} ${hashTwo}`;
         if (diffAlgorithm !== '') {
-            args = `${args}`;
-        }
-        if (columnWidth !== undefined) {
-            args = `${args}`;
-        }
-        if (rulerWidth !== undefined) {
-            args = `${args} -w ${rulerWidth}`;
+            args = `${args} --diff-algorithm=`;
         }
         const getDiffOutput = yield exec.getExecOutput(
         /*
         Workaround for @actions/exec not supporting pipes
         Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
          */
-        `git diff ${args}`);
+        `/bin/bash -c "git diff -p ${args} | delta"`);
         if (getDiffOutput.exitCode !== 0) {
             throw new Error(getDiffOutput.stderr);
         }
@@ -169,7 +163,7 @@ exports.getDiffBetweenCommits = getDiffBetweenCommits;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseInt = exports.validateRulerWidth = exports.validateColumnWidth = exports.validateRef = exports.validateDiffAlgorithm = void 0;
+exports.parseInt = exports.validateRef = exports.validateDiffAlgorithm = void 0;
 const command_line_tools_1 = __nccwpck_require__(260);
 function validateDiffAlgorithm(input) {
     const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/;
@@ -197,34 +191,6 @@ function validateRef(fieldName, input) {
     }
 }
 exports.validateRef = validateRef;
-function validateColumnWidth(input) {
-    const columnWidthInt = parseInt('column-width', true, input);
-    if (columnWidthInt !== undefined) {
-        if (columnWidthInt >= 1) {
-            return columnWidthInt;
-        }
-        else {
-            throw new Error('Column width must be greater than or equal to 1.');
-        }
-    }
-    else {
-        throw new Error('`column-width` is undefined. Please create an issue.');
-    }
-}
-exports.validateColumnWidth = validateColumnWidth;
-function validateRulerWidth(columnWidth, rulerWidthString) {
-    const rulerWidth = parseInt('ruler-width', false, rulerWidthString);
-    if (rulerWidth !== undefined) {
-        if (rulerWidth >= 0 && rulerWidth <= columnWidth) {
-            return rulerWidth;
-        }
-        else {
-            throw new Error('Ruler width must be greater than or equal to zero and equal to or less then column width.');
-        }
-    }
-    // The ruler width is optional, so it's fine if it's missing
-}
-exports.validateRulerWidth = validateRulerWidth;
 function parseInt(fieldName, fieldIsRequired, input) {
     const parsedNumber = Number.parseInt(input);
     if (!isNaN(parsedNumber)) {
@@ -299,10 +265,8 @@ function run() {
             const commitHash = (0, input_validation_1.validateRef)('commit-hash', core.getInput('commit-hash'));
             const secondCommitHash = (0, input_validation_1.validateRef)('second-commit-hash', core.getInput('second-commit-hash'));
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
-            const columnWidth = (0, input_validation_1.validateColumnWidth)(core.getInput('column-width'));
-            const rulerWidth = (0, input_validation_1.validateRulerWidth)(columnWidth, core.getInput('ruler-width'));
             yield (0, setup_delta_1.loadDelta)();
-            const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm, columnWidth, rulerWidth);
+            const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
             core.setOutput('diff', diff);
             core.info(diff);
         }
@@ -355,11 +319,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.loadDelta = void 0;
+exports.loadDelta = exports.setupDelta = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
 const command_line_tools_1 = __nccwpck_require__(260);
 const deltaVersion = '0.15.1';
+/**
+ * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
+ */
 function downloadDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         let deltaPath;
@@ -387,18 +354,18 @@ function downloadDelta() {
         return cachedPath;
     });
 }
+/**
+ * Setup Delta with the custom theme for Discord
+ */
 function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         yield (0, command_line_tools_1.execCommands)([
-            'git config --global core.pager "delta"',
-            'git config --global interactive.diffFilter "delta --color-only"',
-            'git config --global delta.navigate "false"',
-            'git config --global merge.conflictStyle "diff3"',
-            'git config --global diff.colorMoved "default"',
-            'git config --list --show-origin'
+            'git config --local include.path "../dist/themes.gitconfig"',
+            'git config --local delta.features "discord"'
         ]);
     });
 }
+exports.setupDelta = setupDelta;
 function loadDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         let deltaDir = tc.find('delta', deltaVersion);
@@ -3481,7 +3448,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports._readLinuxVersionFile = exports._getOsVersion = exports._findMatch = void 0;
-const semver = __importStar(__nccwpck_require__(562));
+const semver = __importStar(__nccwpck_require__(5911));
 const core_1 = __nccwpck_require__(2186);
 // needs to be require for core node modules to be mocked
 /* eslint @typescript-eslint/no-require-imports: 0 */
@@ -3716,7 +3683,7 @@ const mm = __importStar(__nccwpck_require__(2473));
 const os = __importStar(__nccwpck_require__(2037));
 const path = __importStar(__nccwpck_require__(1017));
 const httpm = __importStar(__nccwpck_require__(6255));
-const semver = __importStar(__nccwpck_require__(562));
+const semver = __importStar(__nccwpck_require__(5911));
 const stream = __importStar(__nccwpck_require__(2781));
 const util = __importStar(__nccwpck_require__(3837));
 const assert_1 = __nccwpck_require__(9491);
@@ -4343,7 +4310,91 @@ function _unique(values) {
 
 /***/ }),
 
-/***/ 562:
+/***/ 7701:
+/***/ ((module) => {
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
+}
+
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]]
+  ]).join('');
+}
+
+module.exports = bytesToUuid;
+
+
+/***/ }),
+
+/***/ 7269:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// Unique ID creation requires a high quality random # generator.  In node.js
+// this is pretty straight-forward - we use the crypto API.
+
+var crypto = __nccwpck_require__(6113);
+
+module.exports = function nodeRNG() {
+  return crypto.randomBytes(16);
+};
+
+
+/***/ }),
+
+/***/ 7468:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var rng = __nccwpck_require__(7269);
+var bytesToUuid = __nccwpck_require__(7701);
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options === 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+
+/***/ }),
+
+/***/ 5911:
 /***/ ((module, exports) => {
 
 exports = module.exports = SemVer
@@ -5942,90 +5993,6 @@ function coerce (version, options) {
     '.' + (match[3] || '0') +
     '.' + (match[4] || '0'), options)
 }
-
-
-/***/ }),
-
-/***/ 7701:
-/***/ ((module) => {
-
-/**
- * Convert array of 16 byte values to UUID string format of the form:
- * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
- */
-var byteToHex = [];
-for (var i = 0; i < 256; ++i) {
-  byteToHex[i] = (i + 0x100).toString(16).substr(1);
-}
-
-function bytesToUuid(buf, offset) {
-  var i = offset || 0;
-  var bth = byteToHex;
-  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([
-    bth[buf[i++]], bth[buf[i++]],
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]], '-',
-    bth[buf[i++]], bth[buf[i++]],
-    bth[buf[i++]], bth[buf[i++]],
-    bth[buf[i++]], bth[buf[i++]]
-  ]).join('');
-}
-
-module.exports = bytesToUuid;
-
-
-/***/ }),
-
-/***/ 7269:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-// Unique ID creation requires a high quality random # generator.  In node.js
-// this is pretty straight-forward - we use the crypto API.
-
-var crypto = __nccwpck_require__(6113);
-
-module.exports = function nodeRNG() {
-  return crypto.randomBytes(16);
-};
-
-
-/***/ }),
-
-/***/ 7468:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var rng = __nccwpck_require__(7269);
-var bytesToUuid = __nccwpck_require__(7701);
-
-function v4(options, buf, offset) {
-  var i = buf && offset || 0;
-
-  if (typeof(options) == 'string') {
-    buf = options === 'binary' ? new Array(16) : null;
-    options = null;
-  }
-  options = options || {};
-
-  var rnds = options.random || (options.rng || rng)();
-
-  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
-  rnds[6] = (rnds[6] & 0x0f) | 0x40;
-  rnds[8] = (rnds[8] & 0x3f) | 0x80;
-
-  // Copy bytes to buffer, if provided
-  if (buf) {
-    for (var ii = 0; ii < 16; ++ii) {
-      buf[i + ii] = rnds[ii];
-    }
-  }
-
-  return buf || bytesToUuid(rnds);
-}
-
-module.exports = v4;
 
 
 /***/ }),
