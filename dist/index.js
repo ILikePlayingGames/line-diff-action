@@ -140,16 +140,27 @@ function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
         if (diffAlgorithm !== '') {
             args = `${args} --diff-algorithm=`;
         }
-        const getDiffOutput = yield exec.getExecOutput(
-        /*
-        Workaround for @actions/exec not supporting pipes
-        Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
-         */
-        `/bin/bash -c "git diff ${args} | delta"`);
-        if (getDiffOutput.exitCode !== 0) {
-            throw new Error(getDiffOutput.stderr);
+        let diffOutput;
+        if (process.platform === 'win32') {
+            diffOutput = yield exec.getExecOutput(
+            /*
+            Workaround for @actions/exec not supporting pipes
+            Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+            */
+            `powershell -Command "git diff ${args} | delta"`);
         }
-        return getDiffOutput.stdout;
+        else {
+            diffOutput = yield exec.getExecOutput(
+            /*
+            Workaround for @actions/exec not supporting pipes
+            Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+             */
+            `/bin/bash -c "git diff ${args} | delta"`);
+        }
+        if (diffOutput.exitCode !== 0) {
+            throw new Error(diffOutput.stderr);
+        }
+        return diffOutput.stdout;
     });
 }
 exports.getDiffBetweenCommits = getDiffBetweenCommits;
@@ -359,8 +370,12 @@ function downloadDelta() {
  */
 function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
+        // On the runner, index.js and themes.gitconfig are in the same folder.
+        const themesPath = process.env.RUNNER_OS === undefined
+            ? '../dist/themes.gitconfig'
+            : 'themes.gitconfig';
         yield (0, command_line_tools_1.execCommands)([
-            'git config --local include.path "../dist/themes.gitconfig"',
+            `git config --local include.path "${themesPath}"`,
             'git config --local delta.features "discord"'
         ]);
     });
