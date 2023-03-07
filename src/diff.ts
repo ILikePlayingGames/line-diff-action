@@ -11,16 +11,29 @@ export async function getDiffBetweenCommits(
     args = `${args} --diff-algorithm=`
   }
 
-  const getDiffOutput: exec.ExecOutput = await exec.getExecOutput(
-    /*
-    Workaround for @actions/exec not supporting pipes
-    Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
-     */
-    `/bin/bash -c "git diff ${args} | delta"`
-  )
-  if (getDiffOutput.exitCode !== 0) {
-    throw new Error(getDiffOutput.stderr)
+  let diffOutput: exec.ExecOutput
+
+  if (process.platform === 'win32') {
+    diffOutput = await exec.getExecOutput(
+      /*
+      Workaround for @actions/exec not supporting pipes
+      Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+      */
+      `powershell -Command "git diff ${args} | delta"`
+    )
+  } else {
+    diffOutput = await exec.getExecOutput(
+      /*
+      Workaround for @actions/exec not supporting pipes
+      Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+       */
+      `/bin/bash -c "git diff ${args} | delta"`
+    )
   }
 
-  return getDiffOutput.stdout
+  if (diffOutput.exitCode !== 0) {
+    throw new Error(diffOutput.stderr)
+  }
+
+  return diffOutput.stdout
 }

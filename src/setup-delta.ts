@@ -51,8 +51,14 @@ async function downloadDelta(): Promise<string> {
  * Setup Delta with the custom theme for Discord
  */
 export async function setupDelta(): Promise<void> {
+  // On the runner, index.js and themes.gitconfig are in the same folder.
+  const themesPath =
+    process.env.RUNNER_OS === undefined
+      ? '../dist/themes.gitconfig'
+      : 'themes.gitconfig'
+
   await execCommands([
-    'git config --local include.path "../dist/themes.gitconfig"',
+    `git config --local include.path "${themesPath}"`,
     'git config --local delta.features "discord"'
   ])
 }
