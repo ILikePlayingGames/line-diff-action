@@ -23,7 +23,7 @@ async function run(): Promise<void> {
     await loadDelta()
     core.info('Delta setup complete')
 
-    const path = `${process.env.HOME}/diff.txt`
+    const path = `./diff.txt`
     await writeDiffToFile(commitHash, secondCommitHash, diffAlgorithm, path)
   } catch (e) {
     core.setFailed(e instanceof Error ? e.message : JSON.stringify(e))
