@@ -272,15 +272,14 @@ function run() {
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
             yield (0, setup_delta_1.loadDelta)();
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
-            const path = `${process.env.HOME}/diff.txt`;
+            const path = `./diff.txt`;
             yield fs.writeFile(path, diff);
             core.info(`Wrote diff to ${path}`);
             core.info(`\nDiff Preview:`);
             core.info(diff);
         }
-        catch (error) {
-            if (error instanceof Error)
-                core.setFailed(error.message);
+        catch (e) {
+            core.setFailed(e.toString());
         }
     });
 }
