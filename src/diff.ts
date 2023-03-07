@@ -7,8 +7,8 @@ export async function getDiffBetweenCommits(
 ): Promise<string> {
   let args = `${hashOne} ${hashTwo}`
 
-  if (diffAlgorithm !== '') {
-    args = `${args} --diff-algorithm=`
+  if (diffAlgorithm !== 'default') {
+    args = `${args} --diff-algorithm=${diffAlgorithm}`
   }
 
   let diffOutput: exec.ExecOutput
