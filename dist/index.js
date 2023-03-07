@@ -260,7 +260,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const fs = __importStar(__nccwpck_require__(3292));
+const fs_1 = __nccwpck_require__(7147);
 const diff_1 = __nccwpck_require__(2484);
 const input_validation_1 = __nccwpck_require__(1196);
 const setup_delta_1 = __nccwpck_require__(5827);
@@ -273,13 +273,12 @@ function run() {
             yield (0, setup_delta_1.loadDelta)();
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
             const path = `./diff.txt`;
-            yield fs.writeFile(path, diff);
+            core.debug(`Writing diff to ${path}`);
+            (0, fs_1.writeFileSync)(path, diff);
             core.info(`Wrote diff to ${path}`);
-            core.info(`\nDiff Preview:`);
-            core.info(diff);
         }
         catch (e) {
-            core.setFailed(e.toString());
+            core.setFailed(e instanceof Error ? e.message : JSON.stringify(e));
         }
     });
 }
@@ -6996,14 +6995,6 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
-
-/***/ }),
-
-/***/ 3292:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("fs/promises");
 
 /***/ }),
 

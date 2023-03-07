@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import * as fs from 'fs/promises'
+import {writeFileSync} from 'fs'
 import {getDiffBetweenCommits} from './diff'
 import {validateDiffAlgorithm, validateRef} from './input-validation'
 import {loadDelta} from './setup-delta'
@@ -26,12 +26,11 @@ async function run(): Promise<void> {
     )
 
     const path = `./diff.txt`
-    await fs.writeFile(path, diff)
+    core.debug(`Writing diff to ${path}`)
+    writeFileSync(path, diff)
     core.info(`Wrote diff to ${path}`)
-    core.info(`\nDiff Preview:`)
-    core.info(diff)
   } catch (e) {
-    core.setFailed((e as object).toString())
+    core.setFailed(e instanceof Error ? e.message : JSON.stringify(e))
   }
 }
 
