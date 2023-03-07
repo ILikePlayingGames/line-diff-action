@@ -290,7 +290,7 @@ function run() {
             core.info(`Diff Algorithm: ${diffAlgorithm}`);
             yield (0, setup_delta_1.loadDelta)();
             core.info('Delta setup complete');
-            const path = '$HOME/diff.txt';
+            const path = `${process.env.HOME}/diff.txt`;
             yield (0, diff_1.writeDiffToFile)(commitHash, secondCommitHash, diffAlgorithm, path);
         }
         catch (e) {
