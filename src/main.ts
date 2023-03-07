@@ -25,7 +25,7 @@ async function run(): Promise<void> {
     )
 
     // Escape special characters in output or GitHub Actions ignores it
-    core.exportVariable('DIFF', `''`)
+    core.exportVariable('DIFF', `'\\u001b'`)
     core.info(diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
