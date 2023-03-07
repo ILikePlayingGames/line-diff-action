@@ -126,8 +126,8 @@ const exec = __importStar(__nccwpck_require__(1514));
 function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
     return __awaiter(this, void 0, void 0, function* () {
         let args = `${hashOne} ${hashTwo}`;
-        if (diffAlgorithm !== '') {
-            args = `${args} --diff-algorithm=`;
+        if (diffAlgorithm !== 'default') {
+            args = `${args} --diff-algorithm=${diffAlgorithm}`;
         }
         let diffOutput;
         if (process.platform === 'win32') {
