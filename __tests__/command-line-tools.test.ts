@@ -4,21 +4,21 @@ import * as diffTool from '../src/diff'
 import {expect, test} from '@jest/globals'
 
 test("commit doesn't exist", async () => {
-  let hash = '7a118f3040c7cbe7373bc03783a3e65d5cd42cd5'
-  await expect(commandLineTools.doesCommitExist(hash)).resolves.toEqual(false)
+  const hash = '7a118f3040c7cbe7373bc03783a3e65d5cd42cd5'
+  await expect(commandLineTools.doesCommitExist(hash)).resolves.toBe(false)
 })
 
 test('commit exists', async () => {
-  let hash = '@'
-  await expect(commandLineTools.doesCommitExist(hash)).resolves.toEqual(true)
+  const hash = '@'
+  await expect(commandLineTools.doesCommitExist(hash)).resolves.toBe(true)
 })
 
 test('diff between commits', async () => {
-  let hashOne = '@~'
-  let hashTwo = '@'
+  const hashOne = '@~'
+  const hashTwo = '@'
 
   await setupDelta()
   await expect(
     diffTool.getDiffBetweenCommits(hashOne, hashTwo, '')
-  ).resolves.not.toBeUndefined()
+  ).resolves.toBeDefined()
 })

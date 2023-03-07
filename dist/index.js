@@ -145,7 +145,7 @@ function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
         Workaround for @actions/exec not supporting pipes
         Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
          */
-        `/bin/bash -c "git diff -p ${args} | delta"`);
+        `/bin/bash -c "git diff ${args} | delta"`);
         if (getDiffOutput.exitCode !== 0) {
             throw new Error(getDiffOutput.stderr);
         }

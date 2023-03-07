@@ -1,17 +1,17 @@
 name: 'build-test'
 on: # rebuild any PRs and main branch changes
   pull_request:
-    types: review_requested
     paths-ignore:
       - '**.md'
       - '.github/**.yml'
+      - '.github/workflows/**.yml'
   push:
     branches:
       - main
-      - 'releases/*'
     paths-ignore:
       - '**.md'
       - '.github/**.yml'
+      - '.github/workflows/**.yml'
 
 jobs:
   build: # make sure build/ci work properly
@@ -24,8 +24,28 @@ jobs:
           npm install
       - run: |
           npm run all
-  test: # make sure the action works on a clean machine without building
+  test-ubuntu: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - id: run_action
+        uses: ./
+        with:
+          commit-hash: '@~'
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - id: run_action
+        uses: ./
+        with:
+          commit-hash: '@~'
+  test-mac:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
         with:
