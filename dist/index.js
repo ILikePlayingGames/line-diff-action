@@ -121,42 +121,58 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDiffBetweenCommits = void 0;
+exports.writeDiffToFile = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
-function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
+const core_1 = __nccwpck_require__(2186);
+const fs = __importStar(__nccwpck_require__(7147));
+function writeDiffToFile(hashOne, hashTwo, diffAlgorithm, filePath) {
     return __awaiter(this, void 0, void 0, function* () {
-        let args = `${hashOne} ${hashTwo}`;
+        let args = `'${hashOne}' '${hashTwo}'`;
         if (diffAlgorithm !== 'default') {
             args = `${args} --diff-algorithm=${diffAlgorithm}`;
         }
-        let diffOutput;
+        core.debug(`Diff arguments: '${args}'`);
+        const platformPath = (0, core_1.toPlatformPath)(filePath);
+        core.info(`Writing diff to ${platformPath}`);
         if (process.platform === 'win32') {
-            diffOutput = yield exec.getExecOutput(
+            yield exec.exec(
             /*
               Workaround for @actions/exec not supporting pipes
               Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
               */
-            `cmd /c git diff ${args} | delta`);
+            `powershell -Command git diff ${args} | delta | tee -FilePath '${platformPath}'`);
         }
         else {
-            diffOutput = yield exec.getExecOutput(
+            yield exec.exec(
             /*
               Workaround for @actions/exec not supporting pipes
               Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
                */
-            `/bin/bash -c "git diff ${args} | delta"`);
+            `/bin/bash -c "git diff ${args} | delta | tee ${platformPath}"`);
         }
-        // Since I'm running bash, then running the command, it eats the exit code.
-        // Use the ANSI colours before the diff file name to check for success.
-        if (diffOutput.stdout.includes('[4;38;5;34m')) {
-            return Promise.resolve(diffOutput.stdout);
+        const status = fs.statSync(filePath);
+        if (status.isFile()) {
+            let data;
+            try {
+                data = fs.readFileSync(filePath, { encoding: 'utf-8' });
+                fs.writeFileSync(filePath, data.trim());
+            }
+            catch (e) {
+                return Promise.reject(e);
+            }
+            if (!data.trim().startsWith('[4;38;5;34m')) {
+                return Promise.reject(new Error(`Diff file has unexpected content:\n${data}`));
+            }
         }
         else {
-            return Promise.reject(diffOutput.stderr);
+            return Promise.reject(new Error(`${filePath} is not a file`));
         }
+        core.info('Diff file written successfully');
+        return Promise.resolve();
     });
 }
-exports.getDiffBetweenCommits = getDiffBetweenCommits;
+exports.writeDiffToFile = writeDiffToFile;
 
 
 /***/ }),
@@ -260,7 +276,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
-const fs_1 = __nccwpck_require__(7147);
 const diff_1 = __nccwpck_require__(2484);
 const input_validation_1 = __nccwpck_require__(1196);
 const setup_delta_1 = __nccwpck_require__(5827);
@@ -275,12 +290,8 @@ function run() {
             core.info(`Diff Algorithm: ${diffAlgorithm}`);
             yield (0, setup_delta_1.loadDelta)();
             core.info('Delta setup complete');
-            const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
-            core.info('Diff complete');
-            const path = `./diff.txt`;
-            core.debug(`Writing diff to ${path}`);
-            (0, fs_1.writeFileSync)(path, diff);
-            core.info(`Wrote diff to ${path}`);
+            const path = '$HOME/diff.txt';
+            yield (0, diff_1.writeDiffToFile)(commitHash, secondCommitHash, diffAlgorithm, path);
         }
         catch (e) {
             core.setFailed(e instanceof Error ? e.message : JSON.stringify(e));
