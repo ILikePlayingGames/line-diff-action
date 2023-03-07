@@ -17,13 +17,19 @@ async function run(): Promise<void> {
     const diffAlgorithm: string = validateDiffAlgorithm(
       core.getInput('diff-algorithm')
     )
+    core.info(`First Hash: ${commitHash}`)
+    core.info(`Second Hash: ${secondCommitHash}`)
+    core.info(`Diff Algorithm: ${diffAlgorithm}`)
+
     await loadDelta()
+    core.info('Delta setup complete')
 
     const diff = await getDiffBetweenCommits(
       commitHash,
       secondCommitHash,
       diffAlgorithm
     )
+    core.info('Diff complete')
 
     const path = `./diff.txt`
     core.debug(`Writing diff to ${path}`)

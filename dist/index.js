@@ -171,7 +171,7 @@ exports.parseInt = exports.validateRef = exports.validateDiffAlgorithm = void 0;
 const command_line_tools_1 = __nccwpck_require__(260);
 function validateDiffAlgorithm(input) {
     const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/;
-    if (input === '' || diffAlgorithmPattern.test(input)) {
+    if (diffAlgorithmPattern.test(input)) {
         return input;
     }
     else {
@@ -270,8 +270,13 @@ function run() {
             const commitHash = (0, input_validation_1.validateRef)('commit-hash', core.getInput('commit-hash'));
             const secondCommitHash = (0, input_validation_1.validateRef)('second-commit-hash', core.getInput('second-commit-hash'));
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
+            core.info(`First Hash: ${commitHash}`);
+            core.info(`Second Hash: ${secondCommitHash}`);
+            core.info(`Diff Algorithm: ${diffAlgorithm}`);
             yield (0, setup_delta_1.loadDelta)();
+            core.info('Delta setup complete');
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
+            core.info('Diff complete');
             const path = `./diff.txt`;
             core.debug(`Writing diff to ${path}`);
             (0, fs_1.writeFileSync)(path, diff);

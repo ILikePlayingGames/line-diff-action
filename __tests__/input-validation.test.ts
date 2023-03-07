@@ -19,14 +19,14 @@ test('validate hash', () => {
 
 test('validate diff algorithm', () => {
   // invalid
-  let inputs = ['7a118f3040c7cbe7373bc03783a3e65d5cd42cd5', '@', 'asdf']
+  let inputs = ['7a118f3040c7cbe7373bc03783a3e65d5cd42cd5', '@', 'asdf', '']
   for (const input of inputs) {
     expect(() => {
       validateDiffAlgorithm(input)
     }).toThrow()
   }
 
-  inputs = ['', 'default', 'myers', 'minimal', 'patience', 'histogram']
+  inputs = ['default', 'myers', 'minimal', 'patience', 'histogram']
   for (const input of inputs) {
     expect(validateDiffAlgorithm(input)).toEqual(input)
   }

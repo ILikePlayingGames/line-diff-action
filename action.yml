@@ -14,6 +14,7 @@ inputs:
     description: 'The commit hash to compare the first commit hash to, defaults to HEAD'
   diff-algorithm:
     required: false
+    default: 'default'
     description: 'The git diff algorithm to use'
 runs:
   using: 'node16'
