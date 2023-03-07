@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.execCommands = exports.setRulerWidth = exports.makeFileExecutable = exports.doesCommitExist = void 0;
+exports.execCommands = exports.doesCommitExist = void 0;
 const exec = __importStar(__nccwpck_require__(1514));
 const core = __importStar(__nccwpck_require__(2186));
 function doesCommitExist(hash) {
@@ -53,24 +53,12 @@ function doesCommitExist(hash) {
             if ((error === null || error === void 0 ? void 0 : error.message) !== undefined) {
                 core.debug(error === null || error === void 0 ? void 0 : error.message);
             }
-            return false;
+            return Promise.resolve(false);
         }
-        return commitExistsOutput.exitCode === 0;
+        return Promise.resolve(commitExistsOutput.exitCode === 0);
     });
 }
 exports.doesCommitExist = doesCommitExist;
-function makeFileExecutable(path) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec.exec(`chmod +x ${path}`);
-    });
-}
-exports.makeFileExecutable = makeFileExecutable;
-function setRulerWidth(rulerWidth) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec.exec(`git config --global diff-so-fancy.rulerWidth ${rulerWidth}`);
-    });
-}
-exports.setRulerWidth = setRulerWidth;
 /**
  * Executes a list of command line commands.
  * Command output isn't captured, use only commands where the
@@ -84,9 +72,10 @@ function execCommands(commands) {
             const commandOutput = yield exec.getExecOutput(command);
             core.debug(commandOutput.stdout);
             if (commandOutput.exitCode !== 0) {
-                throw new Error(commandOutput.stderr);
+                return Promise.reject(commandOutput.stderr);
             }
         }
+        return Promise.resolve();
     });
 }
 exports.execCommands = execCommands;
@@ -144,23 +133,27 @@ function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
         if (process.platform === 'win32') {
             diffOutput = yield exec.getExecOutput(
             /*
-            Workaround for @actions/exec not supporting pipes
-            Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
-            */
-            `powershell -Command "git diff ${args} | delta"`);
+              Workaround for @actions/exec not supporting pipes
+              Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+              */
+            `cmd /c git diff ${args} | delta`);
         }
         else {
             diffOutput = yield exec.getExecOutput(
             /*
-            Workaround for @actions/exec not supporting pipes
-            Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
-             */
+              Workaround for @actions/exec not supporting pipes
+              Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+               */
             `/bin/bash -c "git diff ${args} | delta"`);
         }
-        if (diffOutput.exitCode !== 0) {
-            throw new Error(diffOutput.stderr);
+        // Since I'm running bash, then running the command, it eats the exit code.
+        // Use the ANSI colours before the diff file name to check for success.
+        if (diffOutput.stdout.includes('[4;38;5;34m')) {
+            return Promise.resolve(diffOutput.stdout);
         }
-        return diffOutput.stdout;
+        else {
+            return Promise.reject(diffOutput.stderr);
+        }
     });
 }
 exports.getDiffBetweenCommits = getDiffBetweenCommits;
@@ -334,6 +327,7 @@ exports.loadDelta = exports.setupDelta = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
 const command_line_tools_1 = __nccwpck_require__(260);
+const core_1 = __nccwpck_require__(2186);
 const deltaVersion = '0.15.1';
 /**
  * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
@@ -343,26 +337,37 @@ function downloadDelta() {
         let deltaPath;
         let deltaExtractedFolder;
         let deltaPlatform;
-        if (process.platform === 'win32') {
-            deltaPlatform = 'x86_64-pc-windows-msvc';
-            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.zip`);
-            deltaExtractedFolder = yield tc.extractZip(deltaPath);
+        try {
+            if (process.platform === 'win32') {
+                deltaPlatform = 'x86_64-pc-windows-msvc';
+                deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.zip`);
+                deltaExtractedFolder = yield tc.extractZip(deltaPath);
+            }
+            else if (process.platform === 'darwin') {
+                deltaPlatform = 'x86_64-apple-darwin';
+                deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`);
+                deltaExtractedFolder = yield tc.extractTar(deltaPath);
+            }
+            else {
+                deltaPlatform = 'x86_64-unknown-linux-gnu';
+                deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`);
+                deltaExtractedFolder = yield tc.extractTar(deltaPath);
+            }
         }
-        else if (process.platform === 'darwin') {
-            deltaPlatform = 'x86_64-apple-darwin';
-            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`);
-            deltaExtractedFolder = yield tc.extractTar(deltaPath);
-        }
-        else {
-            deltaPlatform = 'x86_64-unknown-linux-gnu';
-            deltaPath = yield tc.downloadTool(`https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`);
-            deltaExtractedFolder = yield tc.extractTar(deltaPath);
+        catch (e) {
+            core.error('Delta download failed');
+            return Promise.reject(e);
         }
         core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`);
         deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-${deltaPlatform}`;
-        const cachedPath = yield tc.cacheDir(deltaExtractedFolder, 'delta', deltaVersion);
-        core.debug(`cached path: ${cachedPath}`);
-        return cachedPath;
+        try {
+            const cachedPath = yield tc.cacheDir(deltaExtractedFolder, 'delta', deltaVersion);
+            core.debug(`cached path: ${cachedPath}`);
+            return Promise.resolve(cachedPath);
+        }
+        catch (e) {
+            return Promise.reject(e);
+        }
     });
 }
 /**
@@ -372,27 +377,40 @@ function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
         // On the runner, index.js and themes.gitconfig are in the same folder.
         const themesPath = process.env.RUNNER_OS === undefined
-            ? '../dist/themes.gitconfig'
+            ? (0, core_1.toPlatformPath)('../dist/themes.gitconfig')
             : 'themes.gitconfig';
-        yield (0, command_line_tools_1.execCommands)([
-            `git config --local include.path "${themesPath}"`,
-            'git config --local delta.features "discord"'
-        ]);
+        try {
+            yield (0, command_line_tools_1.execCommands)([
+                `git config --local include.path "${themesPath}"`,
+                'git config --local delta.features "discord"'
+            ]);
+            return Promise.resolve();
+        }
+        catch (e) {
+            core.error('Delta setup failed');
+            return Promise.reject(e);
+        }
     });
 }
 exports.setupDelta = setupDelta;
 function loadDelta() {
     return __awaiter(this, void 0, void 0, function* () {
-        let deltaDir = tc.find('delta', deltaVersion);
-        if (deltaDir !== '') {
-            core.info(`delta found at ${deltaDir}`);
+        try {
+            let deltaDir = tc.find('delta', deltaVersion);
+            if (deltaDir !== '') {
+                core.info(`delta found at ${deltaDir}`);
+            }
+            else {
+                core.info(`delta ${deltaVersion} not found in cache, downloading...`);
+                deltaDir = yield downloadDelta();
+            }
+            core.addPath(deltaDir);
+            yield setupDelta();
+            return Promise.resolve();
         }
-        else {
-            core.info(`delta ${deltaVersion} not found in cache, downloading...`);
-            deltaDir = yield downloadDelta();
+        catch (e) {
+            return Promise.reject(e);
         }
-        core.addPath(deltaDir);
-        yield setupDelta();
     });
 }
 exports.loadDelta = loadDelta;

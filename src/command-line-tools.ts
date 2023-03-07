@@ -12,18 +12,10 @@ export async function doesCommitExist(hash: string): Promise<boolean> {
     if ((error as Error)?.message !== undefined) {
       core.debug((error as Error)?.message)
     }
-    return false
+    return Promise.resolve(false)
   }
 
-  return commitExistsOutput.exitCode === 0
-}
-
-export async function makeFileExecutable(path: string): Promise<void> {
-  await exec.exec(`chmod +x ${path}`)
-}
-
-export async function setRulerWidth(rulerWidth: number): Promise<void> {
-  await exec.exec(`git config --global diff-so-fancy.rulerWidth ${rulerWidth}`)
+  return Promise.resolve(commitExistsOutput.exitCode === 0)
 }
 
 /**
@@ -38,7 +30,9 @@ export async function execCommands(commands: string[]): Promise<void> {
     const commandOutput: exec.ExecOutput = await exec.getExecOutput(command)
     core.debug(commandOutput.stdout)
     if (commandOutput.exitCode !== 0) {
-      throw new Error(commandOutput.stderr)
+      return Promise.reject(commandOutput.stderr)
     }
   }
+
+  return Promise.resolve()
 }

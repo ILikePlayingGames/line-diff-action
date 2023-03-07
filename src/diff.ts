@@ -16,24 +16,26 @@ export async function getDiffBetweenCommits(
   if (process.platform === 'win32') {
     diffOutput = await exec.getExecOutput(
       /*
-      Workaround for @actions/exec not supporting pipes
-      Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
-      */
-      `powershell -Command "git diff ${args} | delta"`
+        Workaround for @actions/exec not supporting pipes
+        Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+        */
+      `cmd /c git diff ${args} | delta`
     )
   } else {
     diffOutput = await exec.getExecOutput(
       /*
-      Workaround for @actions/exec not supporting pipes
-      Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
-       */
+        Workaround for @actions/exec not supporting pipes
+        Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
+         */
       `/bin/bash -c "git diff ${args} | delta"`
     )
   }
 
-  if (diffOutput.exitCode !== 0) {
-    throw new Error(diffOutput.stderr)
+  // Since I'm running bash, then running the command, it eats the exit code.
+  // Use the ANSI colours before the diff file name to check for success.
+  if (diffOutput.stdout.includes('[4;38;5;34m')) {
+    return Promise.resolve(diffOutput.stdout)
+  } else {
+    return Promise.reject(diffOutput.stderr)
   }
-
-  return diffOutput.stdout
 }
