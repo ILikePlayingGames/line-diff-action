@@ -272,7 +272,7 @@ function run() {
             yield (0, setup_delta_1.loadDelta)();
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
             // Escape special characters in output or GitHub Actions ignores it
-            core.exportVariable('DIFF', `'\\u001b'`);
+            core.exportVariable('DIFF', `'\\\u001b'`);
             core.info(diff);
         }
         catch (error) {
