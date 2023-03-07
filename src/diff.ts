@@ -3,6 +3,21 @@ import * as exec from '@actions/exec'
 import {toPlatformPath} from '@actions/core'
 import * as fs from 'fs'
 
+function verifyDiffFile(filePath: string): void {
+  const status = fs.statSync(filePath)
+
+  if (status.isFile()) {
+    const data = fs.readFileSync(filePath, {encoding: 'utf-8'})
+    fs.writeFileSync(filePath, data.trim())
+
+    if (!data.trim().startsWith('[4;38;5;34m')) {
+      throw new Error(`Diff file has unexpected content:\n${data}`)
+    }
+  } else {
+    throw new Error(`${filePath} is not a file`)
+  }
+}
+
 export async function writeDiffToFile(
   hashOne: string,
   hashTwo: string,
@@ -36,27 +51,11 @@ export async function writeDiffToFile(
     )
   }
 
-  const status = fs.statSync(filePath)
-
-  if (status.isFile()) {
-    let data: string
-
-    try {
-      data = fs.readFileSync(filePath, {encoding: 'utf-8'})
-      fs.writeFileSync(filePath, data.trim())
-    } catch (e) {
-      return Promise.reject(e)
-    }
-
-    if (!data.trim().startsWith('[4;38;5;34m')) {
-      return Promise.reject(
-        new Error(`Diff file has unexpected content:\n${data}`)
-      )
-    }
-  } else {
-    return Promise.reject(new Error(`${filePath} is not a file`))
+  try {
+    verifyDiffFile(platformPath)
+    core.info('Diff file written successfully')
+    return Promise.resolve()
+  } catch (e) {
+    return Promise.reject(e)
   }
-
-  core.info('Diff file written successfully')
-  return Promise.resolve()
 }

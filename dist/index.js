@@ -126,6 +126,19 @@ const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const core_1 = __nccwpck_require__(2186);
 const fs = __importStar(__nccwpck_require__(7147));
+function verifyDiffFile(filePath) {
+    const status = fs.statSync(filePath);
+    if (status.isFile()) {
+        const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
+        fs.writeFileSync(filePath, data.trim());
+        if (!data.trim().startsWith('[4;38;5;34m')) {
+            throw new Error(`Diff file has unexpected content:\n${data}`);
+        }
+    }
+    else {
+        throw new Error(`${filePath} is not a file`);
+    }
+}
 function writeDiffToFile(hashOne, hashTwo, diffAlgorithm, filePath) {
     return __awaiter(this, void 0, void 0, function* () {
         let args = `'${hashOne}' '${hashTwo}'`;
@@ -151,25 +164,14 @@ function writeDiffToFile(hashOne, hashTwo, diffAlgorithm, filePath) {
                */
             `/bin/bash -c "git diff ${args} | delta | tee ${platformPath}"`);
         }
-        const status = fs.statSync(filePath);
-        if (status.isFile()) {
-            let data;
-            try {
-                data = fs.readFileSync(filePath, { encoding: 'utf-8' });
-                fs.writeFileSync(filePath, data.trim());
-            }
-            catch (e) {
-                return Promise.reject(e);
-            }
-            if (!data.trim().startsWith('[4;38;5;34m')) {
-                return Promise.reject(new Error(`Diff file has unexpected content:\n${data}`));
-            }
+        try {
+            verifyDiffFile(platformPath);
+            core.info('Diff file written successfully');
+            return Promise.resolve();
         }
-        else {
-            return Promise.reject(new Error(`${filePath} is not a file`));
+        catch (e) {
+            return Promise.reject(e);
         }
-        core.info('Diff file written successfully');
-        return Promise.resolve();
     });
 }
 exports.writeDiffToFile = writeDiffToFile;
