@@ -260,6 +260,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
+const fs = __importStar(__nccwpck_require__(3292));
 const diff_1 = __nccwpck_require__(2484);
 const input_validation_1 = __nccwpck_require__(1196);
 const setup_delta_1 = __nccwpck_require__(5827);
@@ -271,8 +272,10 @@ function run() {
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
             yield (0, setup_delta_1.loadDelta)();
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
-            // Escape special characters in output or GitHub Actions ignores it
-            core.exportVariable('DIFF', `'\\\u001b'`);
+            const path = `${process.env.HOME}/diff.txt`;
+            yield fs.writeFile(path, diff);
+            core.info(`Wrote diff to ${path}`);
+            core.info(`\nDiff Preview:`);
             core.info(diff);
         }
         catch (error) {
@@ -6994,6 +6997,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 3292:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 

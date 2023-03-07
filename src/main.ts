@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import * as fs from 'fs/promises'
 import {getDiffBetweenCommits} from './diff'
 import {validateDiffAlgorithm, validateRef} from './input-validation'
 import {loadDelta} from './setup-delta'
@@ -24,8 +25,10 @@ async function run(): Promise<void> {
       diffAlgorithm
     )
 
-    // Escape special characters in output or GitHub Actions ignores it
-    core.exportVariable('DIFF', `'\\\u001b'`)
+    const path = `${process.env.HOME}/diff.txt`
+    await fs.writeFile(path, diff)
+    core.info(`Wrote diff to ${path}`)
+    core.info(`\nDiff Preview:`)
     core.info(diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
