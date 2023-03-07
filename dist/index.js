@@ -271,7 +271,8 @@ function run() {
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
             yield (0, setup_delta_1.loadDelta)();
             const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
-            core.setOutput('diff', diff);
+            // Escape special characters in output or GitHub Actions ignores it
+            core.setOutput('diff', JSON.stringify(diff));
             core.info(diff);
         }
         catch (error) {

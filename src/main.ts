@@ -24,7 +24,8 @@ async function run(): Promise<void> {
       diffAlgorithm
     )
 
-    core.setOutput('diff', diff)
+    // Escape special characters in output or GitHub Actions ignores it
+    core.setOutput('diff', JSON.stringify(diff))
     core.info(diff)
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
