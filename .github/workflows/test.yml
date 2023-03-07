@@ -35,7 +35,7 @@ jobs:
         with:
           commit-hash: '@~'
       - name: Ensure output is set correctly.
-        run: echo "${{ steps.run_action.outputs.diff }}"
+        run: echo "${{ env.DIFF }}"
   test-windows:
     runs-on: windows-latest
     steps:

@@ -15,9 +15,6 @@ inputs:
   diff-algorithm:
     required: false
     description: 'The git diff algorithm to use'
-outputs:
-  diff:
-    description: 'The formatted line differences between HEAD and a given commit hash'
 runs:
   using: 'node16'
   main: 'dist/index.js'
