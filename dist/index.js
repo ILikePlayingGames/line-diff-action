@@ -345,8 +345,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.loadDelta = exports.setupDelta = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
-const command_line_tools_1 = __nccwpck_require__(260);
-const core_1 = __nccwpck_require__(2186);
+const exec = __importStar(__nccwpck_require__(1514));
 const exec_1 = __nccwpck_require__(1514);
 const deltaVersion = '0.15.1';
 /**
@@ -391,21 +390,45 @@ function downloadDelta() {
     });
 }
 /**
+ * Include the themes in dist/themes.gitconfig in the runner's local Git config
+ */
+function importThemes() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const themesFileName = 'themes.gitconfig';
+        const themesPath = process.env.RUNNER_OS === undefined
+            ? `${__dirname}/../dist/${themesFileName}`
+            : `${__dirname}/themes.gitconfig`;
+        const exitCode = yield exec.exec(`git config --local --add include.path ${themesPath}`);
+        return exitCode === 0
+            ? Promise.resolve()
+            : Promise.reject(new Error(`Failed to include ${__dirname}/themes.gitconfig in runner Git config`));
+    });
+}
+/**
+ * Configures Delta to use a given theme from the list of installed themes
+ *
+ * @param themeName name of the theme to use
+ */
+function selectTheme(themeName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const output = yield (0, exec_1.getExecOutput)(`git config --local delta.features "${themeName}"`);
+        if (output.exitCode === 0) {
+            core.info(`Selected Delta theme ${themeName}`);
+            return Promise.resolve();
+        }
+        else {
+            return Promise.reject(output.stderr);
+        }
+    });
+}
+/**
  * Setup Delta with the custom theme for Discord
  */
 function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info(__dirname);
-        yield (0, exec_1.exec)(`ls -R ${__dirname}`);
-        // On the runner, index.js and themes.gitconfig are in the same folder.
-        const themesPath = process.env.RUNNER_OS === undefined
-            ? (0, core_1.toPlatformPath)('../dist/themes.gitconfig')
-            : 'themes.gitconfig';
         try {
-            yield (0, command_line_tools_1.execCommands)([
-                `git config --local include.path "${themesPath}"`,
-                'git config --local delta.features "discord"'
-            ]);
+            yield selectTheme('discord');
+            yield importThemes();
             return Promise.resolve();
         }
         catch (e) {

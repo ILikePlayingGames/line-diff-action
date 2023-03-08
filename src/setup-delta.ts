@@ -1,8 +1,7 @@
 import * as tc from '@actions/tool-cache'
 import * as core from '@actions/core'
-import {execCommands} from './command-line-tools'
-import {toPlatformPath} from '@actions/core'
-import {exec} from '@actions/exec'
+import * as exec from '@actions/exec'
+import {getExecOutput} from '@actions/exec'
 
 const deltaVersion = '0.15.1'
 
@@ -59,24 +58,52 @@ async function downloadDelta(): Promise<string> {
 }
 
 /**
+ * Include the themes in dist/themes.gitconfig in the runner's local Git config
+ */
+async function importThemes(): Promise<void> {
+  const themesFileName = 'themes.gitconfig'
+  const themesPath =
+    process.env.RUNNER_OS === undefined
+      ? `${__dirname}/../dist/${themesFileName}`
+      : `${__dirname}/themes.gitconfig`
+  const exitCode = await exec.exec(
+    `git config --local --add include.path ${themesPath}`
+  )
+
+  return exitCode === 0
+    ? Promise.resolve()
+    : Promise.reject(
+        new Error(
+          `Failed to include ${__dirname}/themes.gitconfig in runner Git config`
+        )
+      )
+}
+
+/**
+ * Configures Delta to use a given theme from the list of installed themes
+ *
+ * @param themeName name of the theme to use
+ */
+async function selectTheme(themeName: string): Promise<void> {
+  const output = await getExecOutput(
+    `git config --local delta.features "${themeName}"`
+  )
+
+  if (output.exitCode === 0) {
+    core.info(`Selected Delta theme ${themeName}`)
+    return Promise.resolve()
+  } else {
+    return Promise.reject(output.stderr)
+  }
+}
+
+/**
  * Setup Delta with the custom theme for Discord
  */
 export async function setupDelta(): Promise<void> {
-  core.info(__dirname)
-  await exec(`ls -R ${__dirname}`)
-
-  // On the runner, index.js and themes.gitconfig are in the same folder.
-  const themesPath =
-    process.env.RUNNER_OS === undefined
-      ? toPlatformPath('../dist/themes.gitconfig')
-      : 'themes.gitconfig'
-
   try {
-    await execCommands([
-      `git config --local include.path "${themesPath}"`,
-      'git config --local delta.features "discord"'
-    ])
-
+    await selectTheme('discord')
+    await importThemes()
     return Promise.resolve()
   } catch (e) {
     core.error('Delta setup failed')
