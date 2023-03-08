@@ -66,6 +66,10 @@ async function importThemes(): Promise<void> {
     process.env.RUNNER_OS === undefined
       ? `${__dirname}/../dist/${themesFileName}`
       : `${__dirname}/themes.gitconfig`
+  /*
+   Will create a duplicate if the key already exists but that doesn't impact
+   functionality
+   */
   const exitCode = await exec.exec(
     `git config --local --add include.path ${themesPath}`
   )

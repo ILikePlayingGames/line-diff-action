@@ -398,6 +398,10 @@ function importThemes() {
         const themesPath = process.env.RUNNER_OS === undefined
             ? `${__dirname}/../dist/${themesFileName}`
             : `${__dirname}/themes.gitconfig`;
+        /*
+         Will create a duplicate if the key already exists but that doesn't impact
+         functionality
+         */
         const exitCode = yield exec.exec(`git config --local --add include.path ${themesPath}`);
         return exitCode === 0
             ? Promise.resolve()
