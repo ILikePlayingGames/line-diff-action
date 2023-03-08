@@ -121,42 +121,59 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getDiffBetweenCommits = void 0;
+exports.writeDiffToFile = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
-function getDiffBetweenCommits(hashOne, hashTwo, diffAlgorithm) {
+const core_1 = __nccwpck_require__(2186);
+const fs = __importStar(__nccwpck_require__(7147));
+function writeDiffToFile(hashOne, hashTwo, diffAlgorithm, filePath) {
     return __awaiter(this, void 0, void 0, function* () {
-        let args = `${hashOne} ${hashTwo}`;
-        if (diffAlgorithm !== '') {
-            args = `${args} --diff-algorithm=`;
+        let args = `'${hashOne}' '${hashTwo}'`;
+        if (diffAlgorithm !== 'default') {
+            args = `${args} --diff-algorithm=${diffAlgorithm}`;
         }
-        let diffOutput;
+        core.debug(`Diff arguments: '${args}'`);
+        const platformPath = (0, core_1.toPlatformPath)(filePath);
+        core.info(`Writing diff to ${platformPath}`);
         if (process.platform === 'win32') {
-            diffOutput = yield exec.getExecOutput(
+            const output = yield exec.getExecOutput(
             /*
               Workaround for @actions/exec not supporting pipes
               Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
               */
-            `cmd /c git diff ${args} | delta`);
+            `powershell -Command git diff ${args} | delta | tee -FilePath '${platformPath}'`);
+            if (output.stderr !== '') {
+                return Promise.reject(output.stderr);
+            }
+            else {
+                core.info('Diff written successfully');
+            }
         }
         else {
-            diffOutput = yield exec.getExecOutput(
+            const output = yield exec.getExecOutput(
             /*
               Workaround for @actions/exec not supporting pipes
               Source: https://github.com/actions/toolkit/issues/359#issuecomment-603065463
                */
-            `/bin/bash -c "git diff ${args} | delta"`);
+            `/bin/bash -c "git diff ${args} | delta | tee ${platformPath}"`);
+            if (output.stderr !== '') {
+                return Promise.reject(output.stderr);
+            }
+            else {
+                core.info('Diff written successfully');
+            }
         }
-        // Since I'm running bash, then running the command, it eats the exit code.
-        // Use the ANSI colours before the diff file name to check for success.
-        if (diffOutput.stdout.includes('[4;38;5;34m')) {
-            return Promise.resolve(diffOutput.stdout);
+        try {
+            const data = fs.readFileSync(filePath, { encoding: 'utf-8' });
+            fs.writeFileSync(filePath, data.trim());
+            return Promise.resolve();
         }
-        else {
-            return Promise.reject(diffOutput.stderr);
+        catch (e) {
+            return Promise.reject(e);
         }
     });
 }
-exports.getDiffBetweenCommits = getDiffBetweenCommits;
+exports.writeDiffToFile = writeDiffToFile;
 
 
 /***/ }),
@@ -171,7 +188,7 @@ exports.parseInt = exports.validateRef = exports.validateDiffAlgorithm = void 0;
 const command_line_tools_1 = __nccwpck_require__(260);
 function validateDiffAlgorithm(input) {
     const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/;
-    if (input === '' || diffAlgorithmPattern.test(input)) {
+    if (diffAlgorithmPattern.test(input)) {
         return input;
     }
     else {
@@ -269,15 +286,16 @@ function run() {
             const commitHash = (0, input_validation_1.validateRef)('commit-hash', core.getInput('commit-hash'));
             const secondCommitHash = (0, input_validation_1.validateRef)('second-commit-hash', core.getInput('second-commit-hash'));
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
+            core.info(`First Hash: ${commitHash}`);
+            core.info(`Second Hash: ${secondCommitHash}`);
+            core.info(`Diff Algorithm: ${diffAlgorithm}`);
             yield (0, setup_delta_1.loadDelta)();
-            const diff = yield (0, diff_1.getDiffBetweenCommits)(commitHash, secondCommitHash, diffAlgorithm);
-            // Escape special characters in output or GitHub Actions ignores it
-            core.exportVariable('DIFF', `'${diff}'`);
-            core.info(diff);
+            core.info('Delta setup complete');
+            const path = `./diff.txt`;
+            yield (0, diff_1.writeDiffToFile)(commitHash, secondCommitHash, diffAlgorithm, path);
         }
-        catch (error) {
-            if (error instanceof Error)
-                core.setFailed(error.message);
+        catch (e) {
+            core.setFailed(e instanceof Error ? e.message : JSON.stringify(e));
         }
     });
 }
@@ -327,8 +345,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.loadDelta = exports.setupDelta = void 0;
 const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
-const command_line_tools_1 = __nccwpck_require__(260);
-const core_1 = __nccwpck_require__(2186);
+const exec = __importStar(__nccwpck_require__(1514));
+const exec_1 = __nccwpck_require__(1514);
 const deltaVersion = '0.15.1';
 /**
  * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
@@ -372,19 +390,49 @@ function downloadDelta() {
     });
 }
 /**
+ * Include the themes in dist/themes.gitconfig in the runner's local Git config
+ */
+function importThemes() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const themesFileName = 'themes.gitconfig';
+        const themesPath = process.env.RUNNER_OS === undefined
+            ? `${__dirname}/../dist/${themesFileName}`
+            : `${__dirname}/themes.gitconfig`;
+        /*
+         Will create a duplicate if the key already exists but that doesn't impact
+         functionality
+         */
+        const exitCode = yield exec.exec(`git config --local --add include.path ${themesPath}`);
+        return exitCode === 0
+            ? Promise.resolve()
+            : Promise.reject(new Error(`Failed to include ${__dirname}/themes.gitconfig in runner Git config`));
+    });
+}
+/**
+ * Configures Delta to use a given theme from the list of installed themes
+ *
+ * @param themeName name of the theme to use
+ */
+function selectTheme(themeName) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const output = yield (0, exec_1.getExecOutput)(`git config --local delta.features "${themeName}"`);
+        if (output.exitCode === 0) {
+            core.info(`Selected Delta theme ${themeName}`);
+            return Promise.resolve();
+        }
+        else {
+            return Promise.reject(output.stderr);
+        }
+    });
+}
+/**
  * Setup Delta with the custom theme for Discord
  */
 function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
-        // On the runner, index.js and themes.gitconfig are in the same folder.
-        const themesPath = process.env.RUNNER_OS === undefined
-            ? (0, core_1.toPlatformPath)('../dist/themes.gitconfig')
-            : 'themes.gitconfig';
         try {
-            yield (0, command_line_tools_1.execCommands)([
-                `git config --local include.path "${themesPath}"`,
-                'git config --local delta.features "discord"'
-            ]);
+            yield selectTheme('discord');
+            yield importThemes();
             return Promise.resolve();
         }
         catch (e) {

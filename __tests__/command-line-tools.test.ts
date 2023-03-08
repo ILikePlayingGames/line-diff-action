@@ -14,11 +14,16 @@ test('commit exists', async () => {
 })
 
 test('diff between commits', async () => {
-  const hashOne = '@~'
+  const hashOne = '@~2'
   const hashTwo = '@'
 
   await setupDelta()
-  await expect(
-    diffTool.getDiffBetweenCommits(hashOne, hashTwo, '')
-  ).resolves.toBeDefined()
+  const promise = diffTool.writeDiffToFile(
+    hashOne,
+    hashTwo,
+    'default',
+    './diff.txt'
+  )
+
+  await expect(promise).resolves.toBeUndefined()
 })

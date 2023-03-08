@@ -35,7 +35,7 @@ jobs:
         with:
           commit-hash: '@~'
       - name: Ensure output is set correctly.
-        run: echo "${{ env.DIFF }}"
+        run: cat ./diff.txt
   test-windows:
     runs-on: windows-latest
     steps:

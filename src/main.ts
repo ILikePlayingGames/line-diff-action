@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {getDiffBetweenCommits} from './diff'
+import {writeDiffToFile} from './diff'
 import {validateDiffAlgorithm, validateRef} from './input-validation'
 import {loadDelta} from './setup-delta'
 
@@ -16,19 +16,17 @@ async function run(): Promise<void> {
     const diffAlgorithm: string = validateDiffAlgorithm(
       core.getInput('diff-algorithm')
     )
+    core.info(`First Hash: ${commitHash}`)
+    core.info(`Second Hash: ${secondCommitHash}`)
+    core.info(`Diff Algorithm: ${diffAlgorithm}`)
+
     await loadDelta()
+    core.info('Delta setup complete')
 
-    const diff = await getDiffBetweenCommits(
-      commitHash,
-      secondCommitHash,
-      diffAlgorithm
-    )
-
-    // Escape special characters in output or GitHub Actions ignores it
-    core.exportVariable('DIFF', `'${diff}'`)
-    core.info(diff)
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message)
+    const path = `./diff.txt`
+    await writeDiffToFile(commitHash, secondCommitHash, diffAlgorithm, path)
+  } catch (e) {
+    core.setFailed(e instanceof Error ? e.message : JSON.stringify(e))
   }
 }
 

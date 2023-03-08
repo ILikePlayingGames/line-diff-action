@@ -34,7 +34,7 @@
     navigate-regex                =
     pager                         = none
     paging                        = never
-    side-by-side                  = true
+    side-by-side                  = false
     syntax-theme                  = Monokai Extended
     width                         = variable
     tabs                          = 4

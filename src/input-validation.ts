@@ -3,7 +3,7 @@ import {doesCommitExist} from './command-line-tools'
 export function validateDiffAlgorithm(input: string): string {
   const diffAlgorithmPattern = /^default|myers|minimal|patience|histogram$/
 
-  if (input === '' || diffAlgorithmPattern.test(input)) {
+  if (diffAlgorithmPattern.test(input)) {
     return input
   } else {
     throw new Error(
