@@ -2,6 +2,7 @@ import * as tc from '@actions/tool-cache'
 import * as core from '@actions/core'
 import {execCommands} from './command-line-tools'
 import {toPlatformPath} from '@actions/core'
+import {exec} from '@actions/exec'
 
 const deltaVersion = '0.15.1'
 
@@ -61,6 +62,9 @@ async function downloadDelta(): Promise<string> {
  * Setup Delta with the custom theme for Discord
  */
 export async function setupDelta(): Promise<void> {
+  core.info(__dirname)
+  await exec(`ls -R ${__dirname}`)
+
   // On the runner, index.js and themes.gitconfig are in the same folder.
   const themesPath =
     process.env.RUNNER_OS === undefined

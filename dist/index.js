@@ -347,6 +347,7 @@ const tc = __importStar(__nccwpck_require__(7784));
 const core = __importStar(__nccwpck_require__(2186));
 const command_line_tools_1 = __nccwpck_require__(260);
 const core_1 = __nccwpck_require__(2186);
+const exec_1 = __nccwpck_require__(1514);
 const deltaVersion = '0.15.1';
 /**
  * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
@@ -394,6 +395,8 @@ function downloadDelta() {
  */
 function setupDelta() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.info(__dirname);
+        yield (0, exec_1.exec)(`ls -R ${__dirname}`);
         // On the runner, index.js and themes.gitconfig are in the same folder.
         const themesPath = process.env.RUNNER_OS === undefined
             ? (0, core_1.toPlatformPath)('../dist/themes.gitconfig')
