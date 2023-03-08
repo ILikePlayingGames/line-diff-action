@@ -97,5 +97,5 @@ of the `fetch-depth` parameter.
 
 ---
 
-This action uses [diff-so-fancy](https://github.com/so-fancy/diff-so-fancy) to generate the formatted diffs. Thank you
-@hrueger for sharing the [piped command workaround](https://github.com/actions/toolkit/issues/359#issuecomment-603065463)!
+This action uses [Delta](https://github.com/dandavison/delta) to generate the formatted diffs. Thank you, @hrueger,
+for sharing the [piped command workaround](https://github.com/actions/toolkit/issues/359#issuecomment-603065463)!
