@@ -16,11 +16,12 @@ async function run(): Promise<void> {
     const diffAlgorithm: string = validateDiffAlgorithm(
       core.getInput('diff-algorithm')
     )
+    const deltaTheme: string = core.getInput('delta-theme')
     core.info(`First Hash: ${commitHash}`)
     core.info(`Second Hash: ${secondCommitHash}`)
     core.info(`Diff Algorithm: ${diffAlgorithm}`)
 
-    await loadDelta()
+    await loadDelta(deltaTheme)
     core.info('Delta setup complete')
 
     const path = `./diff.txt`

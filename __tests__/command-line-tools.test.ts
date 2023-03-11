@@ -17,7 +17,7 @@ test('diff between commits', async () => {
   const hashOne = '@~2'
   const hashTwo = '@'
 
-  await setupDelta()
+  await setupDelta('discord')
   const promise = diffTool.writeDiffToFile(
     hashOne,
     hashTwo,

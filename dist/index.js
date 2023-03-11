@@ -286,10 +286,11 @@ function run() {
             const commitHash = (0, input_validation_1.validateRef)('commit-hash', core.getInput('commit-hash'));
             const secondCommitHash = (0, input_validation_1.validateRef)('second-commit-hash', core.getInput('second-commit-hash'));
             const diffAlgorithm = (0, input_validation_1.validateDiffAlgorithm)(core.getInput('diff-algorithm'));
+            const deltaTheme = core.getInput('delta-theme');
             core.info(`First Hash: ${commitHash}`);
             core.info(`Second Hash: ${secondCommitHash}`);
             core.info(`Diff Algorithm: ${diffAlgorithm}`);
-            yield (0, setup_delta_1.loadDelta)();
+            yield (0, setup_delta_1.loadDelta)(deltaTheme);
             core.info('Delta setup complete');
             const path = `./diff.txt`;
             yield (0, diff_1.writeDiffToFile)(commitHash, secondCommitHash, diffAlgorithm, path);
@@ -426,23 +427,25 @@ function selectTheme(themeName) {
     });
 }
 /**
- * Setup Delta with the custom theme for Discord
+ * Setup Delta with a custom theme, if provided
  */
-function setupDelta() {
+function setupDelta(deltaTheme) {
     return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield selectTheme('discord');
-            yield importThemes();
-            return Promise.resolve();
-        }
-        catch (e) {
-            core.error('Delta setup failed');
-            return Promise.reject(e);
+        if (deltaTheme !== '') {
+            try {
+                yield selectTheme(deltaTheme);
+                yield importThemes();
+                return Promise.resolve();
+            }
+            catch (e) {
+                core.error('Delta setup failed');
+                return Promise.reject(e);
+            }
         }
     });
 }
 exports.setupDelta = setupDelta;
-function loadDelta() {
+function loadDelta(deltaTheme) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             let deltaDir = tc.find('delta', deltaVersion);
@@ -454,7 +457,7 @@ function loadDelta() {
                 deltaDir = yield downloadDelta();
             }
             core.addPath(deltaDir);
-            yield setupDelta();
+            yield setupDelta(deltaTheme);
             return Promise.resolve();
         }
         catch (e) {

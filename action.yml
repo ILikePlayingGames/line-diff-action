@@ -16,6 +16,9 @@ inputs:
     required: false
     default: 'default'
     description: 'The git diff algorithm to use'
+  delta-theme:
+    required: false
+    description: 'The name of the theme that Delta will use to format the diff'
 runs:
   using: 'node16'
   main: 'dist/index.js'

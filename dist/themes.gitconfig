@@ -21,9 +21,5 @@
     hyperlinks                    = false
     keep-plus-minus-markers       = true
     diff-stat-align-width         = 10
-    line-fill-method              = ansi
-    side-by-side                  = false
     syntax-theme                  = none
     width                         = variable
-    tabs                          = 4
-    word-diff-regex               = "\\w+"

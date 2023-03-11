@@ -102,20 +102,22 @@ async function selectTheme(themeName: string): Promise<void> {
 }
 
 /**
- * Setup Delta with the custom theme for Discord
+ * Setup Delta with a custom theme, if provided
  */
-export async function setupDelta(): Promise<void> {
-  try {
-    await selectTheme('discord')
-    await importThemes()
-    return Promise.resolve()
-  } catch (e) {
-    core.error('Delta setup failed')
-    return Promise.reject(e)
+export async function setupDelta(deltaTheme: string): Promise<void> {
+  if (deltaTheme !== '') {
+    try {
+      await selectTheme(deltaTheme)
+      await importThemes()
+      return Promise.resolve()
+    } catch (e) {
+      core.error('Delta setup failed')
+      return Promise.reject(e)
+    }
   }
 }
 
-export async function loadDelta(): Promise<void> {
+export async function loadDelta(deltaTheme: string): Promise<void> {
   try {
     let deltaDir = tc.find('delta', deltaVersion)
 
@@ -127,7 +129,7 @@ export async function loadDelta(): Promise<void> {
     }
 
     core.addPath(deltaDir)
-    await setupDelta()
+    await setupDelta(deltaTheme)
     return Promise.resolve()
   } catch (e) {
     return Promise.reject(e)
