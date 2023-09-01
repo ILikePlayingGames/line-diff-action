@@ -3,7 +3,7 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {getExecOutput} from '@actions/exec'
 
-const deltaVersion = '0.15.1'
+const deltaVersion = '0.16.5'
 
 /**
  * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
