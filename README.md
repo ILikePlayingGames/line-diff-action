@@ -31,7 +31,7 @@ of the `fetch-depth` parameter.
 ## Diff Previous Commit and HEAD
 
 ```yaml
-- uses: actions/checkout@v3
+- uses: actions/checkout@v4
   with:
     # Fetch HEAD and the commit before it
     fetch-depth: 2
@@ -47,7 +47,7 @@ of the `fetch-depth` parameter.
 ## Diff Specific Commit and HEAD
 
 ```yaml
-  - uses: actions/checkout@v3
+  - uses: actions/checkout@v4
     with:
       # Make sure fetch depth is set to include
       # the commit hash below.
@@ -64,7 +64,7 @@ of the `fetch-depth` parameter.
 ## Diff Two Arbitrary Commits
 
 ```yaml
-- uses: actions/checkout@v3
+- uses: actions/checkout@v4
   with:
     # Make sure fetch depth is set to include
     # the commit hashes below.
@@ -82,7 +82,7 @@ of the `fetch-depth` parameter.
 ## Diff With Different Algorithm
 
 ```yaml
-- uses: actions/checkout@v3
+- uses: actions/checkout@v4
   with:
     # Make sure fetch depth is set to include
     # the commit hash below.
@@ -100,7 +100,7 @@ of the `fetch-depth` parameter.
 
 ## Use a custom theme
 ```yaml
-- uses: actions/checkout@v3
+- uses: actions/checkout@v4
   with:
     # Fetch HEAD and the commit before it
     fetch-depth: 2
