@@ -6,8 +6,6 @@ on: # rebuild any PRs and main branch changes
       - '.github/**.yml'
       - '.github/workflows/**.yml'
   push:
-    branches:
-      - main
     paths-ignore:
       - '**.md'
       - '.github/**.yml'
@@ -17,7 +15,7 @@ jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - run: |
@@ -27,7 +25,7 @@ jobs:
   test-ubuntu: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - id: run_action
@@ -39,7 +37,7 @@ jobs:
   test-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - id: run_action
@@ -49,7 +47,7 @@ jobs:
   test-mac:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - id: run_action
