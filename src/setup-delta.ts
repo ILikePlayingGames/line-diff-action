@@ -1,9 +1,9 @@
 import * as tc from '@actions/tool-cache'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
-import {getExecOutput} from '@actions/exec'
+import { getExecOutput } from '@actions/exec'
 
-const deltaVersion = '0.16.5'
+const deltaVersion = '0.17.0'
 
 /**
  * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
@@ -67,9 +67,9 @@ async function importThemes(): Promise<void> {
       ? `${__dirname}/../dist/${themesFileName}`
       : `${__dirname}/themes.gitconfig`
   /*
-   Will create a duplicate if the key already exists but that doesn't impact
-   functionality
-   */
+ Will create a duplicate if the key already exists but that doesn't impact
+ functionality
+ */
   const exitCode = await exec.exec(
     `git config --local --add include.path ${themesPath}`
   )
@@ -77,10 +77,10 @@ async function importThemes(): Promise<void> {
   return exitCode === 0
     ? Promise.resolve()
     : Promise.reject(
-        new Error(
-          `Failed to include ${__dirname}/themes.gitconfig in runner Git config`
-        )
+      new Error(
+        `Failed to include ${__dirname}/themes.gitconfig in runner Git config`
       )
+    )
 }
 
 /**
@@ -124,7 +124,9 @@ export async function loadDelta(deltaTheme: string): Promise<void> {
     if (deltaDir !== '') {
       core.info(`delta found at ${deltaDir}`)
     } else {
-      core.info(`delta ${deltaVersion} not found in cache, downloading...`)
+      core.info(
+        `delta ${deltaVersion} not found in cache, downloading...`
+      )
       deltaDir = await downloadDelta()
     }
 
