@@ -6,6 +6,8 @@ on: # rebuild any PRs and main branch changes
       - '.github/**.yml'
       - '.github/workflows/**.yml'
   push:
+    branches:
+      - main
     paths-ignore:
       - '**.md'
       - '.github/**.yml'

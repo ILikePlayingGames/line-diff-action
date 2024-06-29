@@ -1,6 +1,6 @@
 {
   "name": "line-diff-action",
-  "version": "1.3",
+  "version": "2",
   "private": true,
   "description": "A GitHub action that displays the line differences between HEAD and a given commit hash",
   "main": "lib/main.js",
