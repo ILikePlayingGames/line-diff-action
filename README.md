@@ -7,7 +7,7 @@
 ---
 
 This action gets the line by line differences between two commits and formats the result using
-[Delta](https://github.com/dandavison/delta). The result is then written to a file on the runner (`./diff.txt` by default).
+[Delta](https://github.com/dandavison/delta) (V3 of this action uses Delta v0.19). The result is then written to a file on the runner (`./diff.txt` by default).
 It cannot be passed as a step output or an environment variable due to the ANSI escape codes and other special
 characters that may be present in the diff.
 
@@ -110,8 +110,8 @@ of the `fetch-depth` parameter.
   uses: ILikePlayingGames/line-diff@v3
   with:
     commit-hash: '@~'
-    # Use the discord-dark custom theme
-    delta-theme: discord-dark
+    # Use the discord custom theme
+    delta-theme: discord
   # Read ./diff.txt in your next step to use the diff.
 - run: cat ./diff.txt
 ```

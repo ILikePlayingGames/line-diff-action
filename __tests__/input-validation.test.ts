@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals'
-import { validateDiffAlgorithm, validateRef } from '../dist/input-validation.js'
+import { validateDiffAlgorithm, validateRef } from '../lib/input-validation.js'
 
 test('validate hash', () => {
   // invalid

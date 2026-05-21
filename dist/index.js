@@ -34649,7 +34649,7 @@ function _unique(values) {
 
 const deltaVersion = '0.19.2';
 /**
- * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
+ * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64/arm64, or Ubuntu x64/arm64)
  */
 async function downloadDelta() {
     let deltaArchiveExtension;
@@ -34691,6 +34691,8 @@ async function downloadDelta() {
     }
     info(`Downloaded Delta ${deltaVersion} for ${process.platform}`);
     deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-${deltaPlatform}`;
+    await downloadTool(`https://raw.githubusercontent.com/dandavison/delta/refs/tags/${deltaVersion}/themes.gitconfig`, `${deltaExtractedFolder}/themes.gitconfig`);
+    info(`Downloaded Delta custom themes`);
     try {
         const cachedPath = await cacheDir(deltaExtractedFolder, 'delta', deltaVersion);
         core_debug(`cached path: ${cachedPath}`);
@@ -34701,13 +34703,10 @@ async function downloadDelta() {
     }
 }
 /**
- * Include the themes in dist/themes.gitconfig in the runner's local Git config
+ * Include the themes in the runner's local Git config
  */
 async function importThemes() {
-    const themesFileName = 'themes.gitconfig';
-    const themesPath = process.env.RUNNER_OS === undefined
-        ? `${import.meta.dirname}/../dist/${themesFileName}`
-        : `${import.meta.dirname}/themes.gitconfig`;
+    const themesPath = `${find('delta', deltaVersion)}/themes.gitconfig`;
     /*
    Will create a duplicate if the key already exists but that doesn't impact
    functionality
@@ -34715,7 +34714,7 @@ async function importThemes() {
     const exitCode = await exec_exec(`git config --local --add include.path ${themesPath}`);
     return exitCode === 0
         ? Promise.resolve()
-        : Promise.reject(new Error(`Failed to include ${import.meta.dirname}/themes.gitconfig in runner Git config`));
+        : Promise.reject(new Error(`Failed to include ${themesPath}/themes.gitconfig in runner Git config`));
 }
 /**
  * Configures Delta to use a given theme from the list of installed themes
@@ -34738,8 +34737,8 @@ async function selectTheme(themeName) {
 async function setupDelta(deltaTheme) {
     if (deltaTheme !== '') {
         try {
-            await selectTheme(deltaTheme);
             await importThemes();
+            await selectTheme(deltaTheme);
             return Promise.resolve();
         }
         catch (e) {

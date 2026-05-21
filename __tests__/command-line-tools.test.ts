@@ -1,6 +1,5 @@
-import * as commandLineTools from '../dist/command-line-tools.js'
-import { setupDelta } from '../dist/setup-delta.js'
-import * as diffTool from '../dist/diff.js'
+import * as commandLineTools from '../lib/command-line-tools.js'
+import * as diffTool from '../lib/diff.js'
 import { expect, test } from '@jest/globals'
 
 test('commit doesn\'t exist', async () => {
@@ -17,7 +16,6 @@ test('diff between commits', async () => {
   const hashOne = '@~2'
   const hashTwo = '@'
 
-  await setupDelta('discord')
   const promise = diffTool.writeDiffToFile(
     hashOne,
     hashTwo,

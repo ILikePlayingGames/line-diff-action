@@ -6,7 +6,7 @@ import { getExecOutput } from '@actions/exec'
 const deltaVersion = '0.19.2'
 
 /**
- * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
+ * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64/arm64, or Ubuntu x64/arm64)
  */
 async function downloadDelta(): Promise<string> {
   let deltaArchiveExtension: '.zip' | '.tar.gz' | undefined
@@ -44,7 +44,7 @@ async function downloadDelta(): Promise<string> {
   const deltaPath = await tc.downloadTool(
     `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}${deltaArchiveExtension}`,
   )
-  let deltaExtractedFolder
+  let deltaExtractedFolder: string
 
   if (deltaArchiveExtension === '.zip') {
     deltaExtractedFolder = await tc.extractZip(deltaPath)
@@ -56,6 +56,13 @@ async function downloadDelta(): Promise<string> {
   core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`)
 
   deltaExtractedFolder = `${deltaExtractedFolder}/delta-${deltaVersion}-${deltaPlatform}`
+
+  await tc.downloadTool(
+    `https://raw.githubusercontent.com/dandavison/delta/refs/tags/${deltaVersion}/themes.gitconfig`,
+    `${deltaExtractedFolder}/themes.gitconfig`,
+  )
+
+  core.info(`Downloaded Delta custom themes`)
 
   try {
     const cachedPath = await tc.cacheDir(
@@ -74,14 +81,11 @@ async function downloadDelta(): Promise<string> {
 }
 
 /**
- * Include the themes in dist/themes.gitconfig in the runner's local Git config
+ * Include the themes in the runner's local Git config
  */
 async function importThemes(): Promise<void> {
-  const themesFileName = 'themes.gitconfig'
-  const themesPath
-    = process.env.RUNNER_OS === undefined
-      ? `${import.meta.dirname}/../dist/${themesFileName}`
-      : `${import.meta.dirname}/themes.gitconfig`
+  const themesPath = `${tc.find('delta', deltaVersion)}/themes.gitconfig`
+
   /*
  Will create a duplicate if the key already exists but that doesn't impact
  functionality
@@ -94,7 +98,7 @@ async function importThemes(): Promise<void> {
     ? Promise.resolve()
     : Promise.reject(
         new Error(
-          `Failed to include ${import.meta.dirname}/themes.gitconfig in runner Git config`,
+          `Failed to include ${themesPath}/themes.gitconfig in runner Git config`,
         ),
       )
 }
@@ -124,8 +128,8 @@ async function selectTheme(themeName: string): Promise<void> {
 export async function setupDelta(deltaTheme: string): Promise<void> {
   if (deltaTheme !== '') {
     try {
-      await selectTheme(deltaTheme)
       await importThemes()
+      await selectTheme(deltaTheme)
       return Promise.resolve()
     }
     catch (e) {
