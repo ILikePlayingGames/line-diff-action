@@ -9,36 +9,48 @@ const deltaVersion = '0.19.2'
  * Download Delta for the OS of the Github-hosted runner (can be Windows x64, macOS x64, or Ubuntu x64)
  */
 async function downloadDelta(): Promise<string> {
-  let deltaPath
-  let deltaExtractedFolder
+  let deltaArchiveExtension: '.zip' | '.tar.gz' | undefined
   let deltaPlatform
 
-  try {
+  if (process.arch === 'x64') {
     if (process.platform === 'win32') {
       deltaPlatform = 'x86_64-pc-windows-msvc'
-      deltaPath = await tc.downloadTool(
-        `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.zip`,
-      )
-      deltaExtractedFolder = await tc.extractZip(deltaPath)
+      deltaArchiveExtension = '.zip'
     }
     else if (process.platform === 'darwin') {
       deltaPlatform = 'x86_64-apple-darwin'
-      deltaPath = await tc.downloadTool(
-        `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`,
-      )
-      deltaExtractedFolder = await tc.extractTar(deltaPath)
+      deltaArchiveExtension = '.tar.gz'
     }
-    else {
+    else if (process.platform === 'linux') {
       deltaPlatform = 'x86_64-unknown-linux-gnu'
-      deltaPath = await tc.downloadTool(
-        `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}.tar.gz`,
-      )
-      deltaExtractedFolder = await tc.extractTar(deltaPath)
+      deltaArchiveExtension = '.tar.gz'
     }
   }
-  catch (e) {
-    core.error('Delta download failed')
-    return Promise.reject(e)
+  else if (process.arch === 'arm64') {
+    if (process.platform === 'darwin') {
+      deltaPlatform = 'aarch64-apple-darwin'
+      deltaArchiveExtension = '.tar.gz'
+    }
+    else if (process.platform === 'linux') {
+      deltaPlatform = 'aarch64-unknown-linux-gnu'
+      deltaArchiveExtension = '.tar.gz'
+    }
+  }
+
+  if (deltaPlatform === undefined || deltaArchiveExtension === undefined) {
+    throw new Error(`Unsupported runner platform: ${process.arch}-${process.platform}`)
+  }
+
+  const deltaPath = await tc.downloadTool(
+    `https://github.com/dandavison/delta/releases/download/${deltaVersion}/delta-${deltaVersion}-${deltaPlatform}${deltaArchiveExtension}`,
+  )
+  let deltaExtractedFolder
+
+  if (deltaArchiveExtension === '.zip') {
+    deltaExtractedFolder = await tc.extractZip(deltaPath)
+  }
+  else {
+    deltaExtractedFolder = await tc.extractTar(deltaPath)
   }
 
   core.info(`Downloaded Delta ${deltaVersion} for ${process.platform}`)
