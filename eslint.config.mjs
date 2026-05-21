@@ -1,18 +1,19 @@
 // eslint.config.mjs
 // @ts-check
 
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import eslint from '@eslint/js'
+import stylistic from '@stylistic/eslint-plugin'
 
-export default tseslint.config(
+export default [
   eslint.configs.recommended,
-  ...tseslint.configs.recommended, {
+  stylistic.configs.recommended,
+  {
     rules: {
-      "no-unused-vars": "warn"
+      'no-unused-vars': 'warn',
     },
     ignores: [
-      "dist/*",
-      "lib/*"
-    ]
-  }
-);
+      'dist/*',
+      'lib/*',
+    ],
+  },
+]
